@@ -28,11 +28,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y sshpass
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Testar conexão SSH
+        run: |
+          echo "Testando conexão SSH..."
+          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'Conexão SSH bem-sucedida!' && pwd"
 
       - name: Deploy Laravel Application
         run: |
-          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+          echo "Iniciando deploy no servidor..."
+          echo "Host: ${{ secrets.SSH_HOST }}"
+          echo "Port: ${{ secrets.SSH_PORT }}"
+          echo "User: ${{ secrets.SSH_USER }}"
+          echo "Directory: ${{ secrets.SSH_DIRECTORY }}"
+          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -v ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "set -e && \
             cd ${{ secrets.SSH_DIRECTORY }} || { echo 'ERRO: Não foi possível acessar o diretório ${{ secrets.SSH_DIRECTORY }}'; exit 1; } && \
             echo 'Diretório atual:' && pwd && \
