@@ -13,6 +13,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências e compilar assets
+        run: |
+          npm ci
+          npm run build
+
       - name: Setup SSH with password
         run: |
           sudo apt-get update
@@ -23,36 +34,48 @@ jobs:
       - name: Deploy Laravel Application
         run: |
           sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "cd ${{ secrets.SSH_DIRECTORY }} && \
+            "set -e && \
+            cd ${{ secrets.SSH_DIRECTORY }} || { echo 'ERRO: Não foi possível acessar o diretório ${{ secrets.SSH_DIRECTORY }}'; exit 1; } && \
+            echo 'Diretório atual:' && pwd && \
             if [ ! -d .git ]; then \
-              echo 'Erro: Diretório não é um repositório Git. Verifique o caminho em SSH_DIRECTORY.'; \
-              echo 'Diretório atual:' && pwd && ls -la; \
+              echo 'ERRO: Diretório não é um repositório Git. Verifique o caminho em SSH_DIRECTORY.'; \
+              echo 'Conteúdo do diretório:' && ls -la; \
               exit 1; \
             fi && \
-            echo '=== Atualizando código do repositório ===' && \
-            git fetch origin && \
+            echo '=== [1/5] Atualizando código do repositório ===' && \
+            git fetch origin || { echo 'ERRO ao fazer fetch do repositório'; exit 1; } && \
             git merge --abort 2>/dev/null || true && \
             git reset --hard HEAD && \
             git clean -fd && \
             git reset --hard origin/main && \
-            git pull origin main && \
-            echo '=== Instalando dependências do Composer ===' && \
-            composer install --no-dev --optimize-autoloader --no-interaction && \
-            echo '=== Instalando dependências do NPM ===' && \
-            npm ci && \
-            echo '=== Compilando assets ===' && \
-            npm run build && \
-            echo '=== Executando migrations ===' && \
-            php artisan migrate --force && \
-            echo '=== Limpando caches ===' && \
-            php artisan config:clear && \
-            php artisan cache:clear && \
-            php artisan view:clear && \
-            php artisan route:clear && \
-            echo '=== Otimizando para produção ===' && \
-            php artisan config:cache && \
-            php artisan route:cache && \
-            php artisan view:cache && \
-            php artisan optimize && \
+            git pull origin main || { echo 'ERRO ao fazer pull do repositório'; exit 1; } && \
+            echo 'Commit atual:' && git log -1 --oneline && \
+            echo '=== [2/5] Verificando dependências ===' && \
+            command -v composer >/dev/null 2>&1 || { echo 'ERRO: Composer não está instalado'; exit 1; } && \
+            command -v php >/dev/null 2>&1 || { echo 'ERRO: PHP não está instalado'; exit 1; } && \
+            echo 'Versões:' && php -v | head -1 && composer --version | head -1 && \
+            echo '=== [3/5] Instalando dependências do Composer ===' && \
+            composer install --no-dev --optimize-autoloader --no-interaction || { echo 'ERRO ao instalar dependências do Composer'; exit 1; } && \
+            echo '=== [4/5] Executando migrations ===' && \
+            php artisan migrate --force || { echo 'ERRO ao executar migrations'; exit 1; } && \
+            echo '=== [5/5] Limpando e otimizando caches ===' && \
+            php artisan config:clear || true && \
+            php artisan cache:clear || true && \
+            php artisan view:clear || true && \
+            php artisan route:clear || true && \
+            php artisan config:cache || { echo 'ERRO ao criar cache de configuração'; exit 1; } && \
+            php artisan route:cache || { echo 'ERRO ao criar cache de rotas'; exit 1; } && \
+            php artisan view:cache || { echo 'ERRO ao criar cache de views'; exit 1; } && \
+            php artisan optimize || { echo 'ERRO ao otimizar aplicação'; exit 1; } && \
             echo '=== Deploy concluído com sucesso! ===' && \
-            ls -la"
+            echo 'Status final:' && ls -la | head -10"
+
+      - name: Upload assets compilados
+        run: |
+          if [ -d "public/build" ]; then
+            echo "Fazendo upload dos assets compilados..."
+            sshpass -p "${{ secrets.SSH_PASSPHRASE }}" scp -P ${{ secrets.SSH_PORT }} -r public/build ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SSH_DIRECTORY }}/public/
+            echo "Assets enviados com sucesso!"
+          else
+            echo "Aviso: Diretório public/build não encontrado. Assets podem não estar compilados."
+          fi
