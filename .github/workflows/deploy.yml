@@ -76,9 +76,13 @@ jobs:
             else \
               echo 'Composer não encontrado. Instalando...' && \
               curl -sS https://getcomposer.org/installer | php && \
-              mv composer.phar /usr/local/bin/composer && \
-              chmod +x /usr/local/bin/composer && \
-              COMPOSER_BIN='composer'; \
+              if mv composer.phar /usr/local/bin/composer 2>/dev/null; then \
+                chmod +x /usr/local/bin/composer && \
+                COMPOSER_BIN='composer'; \
+              else \
+                echo 'Não foi possível mover para /usr/local/bin. Usando composer.phar local.' && \
+                COMPOSER_BIN='php composer.phar'; \
+              fi; \
             fi && \
             echo 'Composer:' && eval $COMPOSER_BIN --version | head -1 && \
             echo '=== [3/5] Instalando dependências do Composer ===' && \
