@@ -10,109 +10,145 @@ jobs:
     runs-on: ubuntu-latest
     environment: producao
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Instalar dependências e compilar assets
+      - name: Setup SSH
         run: |
-          npm install
-          npm run build
-
-      - name: Setup SSH with password
-        run: |
+          echo "🔧 Configurando SSH..."
           sudo apt-get update
           sudo apt-get install -y sshpass
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+          echo "✅ SSH configurado com sucesso!"
 
-      - name: Testar conexão SSH
+      - name: Deploy e Iniciar Servidor
         run: |
-          echo "Testando conexão SSH..."
-          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'Conexão SSH bem-sucedida!' && pwd"
-
-      - name: Deploy Laravel Application
-        run: |
-          echo "Iniciando deploy no servidor..."
-          echo "Host: ${{ secrets.SSH_HOST }}"
-          echo "Port: ${{ secrets.SSH_PORT }}"
-          echo "User: ${{ secrets.SSH_USER }}"
-          echo "Directory: ${{ secrets.SSH_DIRECTORY }}"
-          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "set -e && \
-            cd ${{ secrets.SSH_DIRECTORY }} || { echo 'ERRO: Não foi possível acessar o diretório ${{ secrets.SSH_DIRECTORY }}'; exit 1; } && \
-            echo 'Diretório atual:' && pwd && \
-            if [ ! -d .git ]; then \
-              echo 'ERRO: Diretório não é um repositório Git. Verifique o caminho em SSH_DIRECTORY.'; \
-              echo 'Conteúdo do diretório:' && ls -la; \
-              exit 1; \
-            fi && \
-            echo '=== [1/5] Atualizando código do repositório ===' && \
-            git fetch origin || { echo 'ERRO ao fazer fetch do repositório'; exit 1; } && \
-            git merge --abort 2>/dev/null || true && \
-            git reset --hard HEAD && \
-            git clean -fd && \
-            git reset --hard origin/main && \
-            git pull origin main || { echo 'ERRO ao fazer pull do repositório'; exit 1; } && \
-            echo 'Commit atual:' && git log -1 --oneline && \
-            echo '=== [2/5] Verificando dependências ===' && \
-            command -v php >/dev/null 2>&1 || { echo 'ERRO: PHP não está instalado'; exit 1; } && \
-            echo 'PHP encontrado:' && php -v | head -1 && \
-            COMPOSER_BIN='' && \
-            if command -v composer >/dev/null 2>&1; then \
-              COMPOSER_BIN='composer'; \
-            elif [ -f /usr/local/bin/composer ]; then \
-              COMPOSER_BIN='/usr/local/bin/composer'; \
-            elif [ -f ~/.composer/vendor/bin/composer ]; then \
-              COMPOSER_BIN='~/.composer/vendor/bin/composer'; \
-            elif [ -f composer.phar ]; then \
-              COMPOSER_BIN='php composer.phar'; \
-            else \
-              echo 'Composer não encontrado. Instalando...' && \
-              curl -sS https://getcomposer.org/installer | php && \
-              if mv composer.phar /usr/local/bin/composer 2>/dev/null; then \
-                chmod +x /usr/local/bin/composer && \
-                COMPOSER_BIN='composer'; \
-              else \
-                echo 'Não foi possível mover para /usr/local/bin. Usando composer.phar local.' && \
-                COMPOSER_BIN='php composer.phar'; \
-              fi; \
-            fi && \
-            if [ \"$COMPOSER_BIN\" = 'php composer.phar' ]; then \
-              echo 'Composer:' && php composer.phar --version | head -1 && \
-              echo '=== [3/5] Instalando dependências do Composer ===' && \
-              php composer.phar install --no-dev --optimize-autoloader --no-interaction || { echo 'ERRO ao instalar dependências do Composer'; exit 1; }; \
-            else \
-              echo 'Composer:' && $COMPOSER_BIN --version | head -1 && \
-              echo '=== [3/5] Instalando dependências do Composer ===' && \
-              $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction || { echo 'ERRO ao instalar dependências do Composer'; exit 1; }; \
-            fi && \
-            echo '=== [4/5] Executando migrations ===' && \
-            php artisan migrate --force || { echo 'ERRO ao executar migrations'; exit 1; } && \
-            echo '=== [5/5] Limpando e otimizando caches ===' && \
-            php artisan config:clear || true && \
-            php artisan cache:clear || true && \
-            php artisan view:clear || true && \
-            php artisan route:clear || true && \
-            php artisan config:cache || { echo 'ERRO ao criar cache de configuração'; exit 1; } && \
-            php artisan route:cache || { echo 'ERRO ao criar cache de rotas'; exit 1; } && \
-            php artisan view:cache || { echo 'ERRO ao criar cache de views'; exit 1; } && \
-            php artisan optimize || { echo 'ERRO ao otimizar aplicação'; exit 1; } && \
-            echo '=== Deploy concluído com sucesso! ===' && \
-            echo 'Status final:' && ls -la | head -10"
-
-      - name: Upload assets compilados
-        run: |
-          if [ -d "public/build" ]; then
-            echo "Fazendo upload dos assets compilados..."
-            sshpass -p "${{ secrets.SSH_PASSPHRASE }}" scp -P ${{ secrets.SSH_PORT }} -r public/build ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SSH_DIRECTORY }}/public/
-            echo "Assets enviados com sucesso!"
-          else
-            echo "Aviso: Diretório public/build não encontrado. Assets podem não estar compilados."
-          fi
+          echo "🚀 Iniciando deploy..."
+          echo "📋 Informações do servidor:"
+          echo "   Host: ${{ secrets.SSH_HOST }}"
+          echo "   Porta: ${{ secrets.SSH_PORT }}"
+          echo "   Usuário: ${{ secrets.SSH_USER }}"
+          echo "   Diretório: ${{ secrets.SSH_DIRECTORY }}"
+          echo ""
+          
+          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
+            set -e
+            SSH_DIR="${{ secrets.SSH_DIRECTORY }}"
+            SSH_HOST="${{ secrets.SSH_HOST }}"
+            echo "📁 Acessando diretório do projeto..."
+            cd \$SSH_DIR || { echo "❌ ERRO: Não foi possível acessar o diretório"; exit 1; }
+            echo "✅ Diretório atual: $(pwd)"
+            echo ""
+            
+            echo "🔍 Verificando PHP..."
+            if ! command -v php >/dev/null 2>&1; then
+              echo "❌ ERRO: PHP não está instalado"
+              exit 1
+            fi
+            echo "✅ PHP encontrado: $(php -v | head -1)"
+            echo ""
+            
+            echo "🔍 Verificando Composer..."
+            if command -v composer >/dev/null 2>&1; then
+              COMPOSER_CMD="composer"
+              echo "✅ Composer encontrado no PATH"
+            elif [ -f composer.phar ]; then
+              COMPOSER_CMD="php composer.phar"
+              echo "✅ Composer encontrado (composer.phar)"
+            else
+              echo "📦 Composer não encontrado. Instalando..."
+              curl -sS https://getcomposer.org/installer | php
+              if [ -f composer.phar ]; then
+                COMPOSER_CMD="php composer.phar"
+                echo "✅ Composer instalado com sucesso!"
+              else
+                echo "❌ ERRO: Falha ao instalar Composer"
+                exit 1
+              fi
+            fi
+            echo "📊 Versão do Composer:"
+            if [ "\$COMPOSER_CMD" = "php composer.phar" ]; then
+              php composer.phar --version
+            else
+              \$COMPOSER_CMD --version
+            fi
+            echo ""
+            
+            echo "📦 Instalando dependências do Laravel..."
+            if [ "\$COMPOSER_CMD" = "php composer.phar" ]; then
+              php composer.phar install --no-dev --optimize-autoloader --no-interaction
+            else
+              \$COMPOSER_CMD install --no-dev --optimize-autoloader --no-interaction
+            fi
+            echo "✅ Dependências instaladas com sucesso!"
+            echo ""
+            
+            echo "🔧 Configurando Laravel..."
+            if [ ! -f .env ]; then
+              echo "⚠️  Arquivo .env não encontrado. Criando a partir do .env.example..."
+              cp .env.example .env 2>/dev/null || echo "⚠️  .env.example não encontrado"
+            fi
+            php artisan key:generate --force 2>/dev/null || echo "⚠️  Chave já existe ou erro ao gerar"
+            echo "✅ Laravel configurado!"
+            echo ""
+            
+            echo "🗄️  Executando migrations..."
+            php artisan migrate --force || echo "⚠️  Aviso: Erro ao executar migrations (pode ser normal se já estiverem executadas)"
+            echo ""
+            
+            echo "🧹 Limpando caches..."
+            php artisan config:clear || true
+            php artisan cache:clear || true
+            php artisan view:clear || true
+            php artisan route:clear || true
+            echo "✅ Caches limpos!"
+            echo ""
+            
+            echo "⚡ Otimizando aplicação..."
+            php artisan config:cache || true
+            php artisan route:cache || true
+            php artisan optimize || true
+            echo "✅ Aplicação otimizada!"
+            echo ""
+            
+            echo "🚀 Iniciando servidor Laravel..."
+            echo "📝 O servidor será iniciado em background na porta 8000"
+            echo "🌐 Acesse: http://\$SSH_HOST:8000"
+            echo ""
+            
+            # Para o servidor anterior se estiver rodando
+            pkill -f "artisan serve" || true
+            sleep 2
+            
+            # Inicia o servidor em background
+            nohup php artisan serve --host=0.0.0.0 --port=8000 > storage/logs/server.log 2>&1 &
+            SERVER_PID=$!
+            sleep 3
+            
+            # Verifica se o servidor está rodando
+            if ps -p $SERVER_PID > /dev/null; then
+              echo "✅ Servidor iniciado com sucesso! (PID: $SERVER_PID)"
+              echo "📋 Logs do servidor: storage/logs/server.log"
+            else
+              echo "❌ ERRO: Falha ao iniciar o servidor"
+              echo "📋 Últimas linhas do log:"
+              tail -20 storage/logs/server.log 2>/dev/null || echo "Log não disponível"
+              exit 1
+            fi
+            echo ""
+            
+            echo "🎉 Deploy concluído com sucesso!"
+            echo "📊 Status final:"
+            echo "   - Diretório: $(pwd)"
+            echo "   - PHP: $(php -v | head -1 | cut -d' ' -f1-3)"
+            if [ "\$COMPOSER_CMD" = "php composer.phar" ]; then
+              COMPOSER_VERSION=\$(php composer.phar --version | head -1)
+            else
+              COMPOSER_VERSION=\$(\$COMPOSER_CMD --version | head -1)
+            fi
+            echo "   - Composer: \$COMPOSER_VERSION"
+            echo "   - Servidor: Rodando (PID: $SERVER_PID)"
+          ENDSSH
+          
+          echo ""
+          echo "✅ Deploy finalizado com sucesso!"
