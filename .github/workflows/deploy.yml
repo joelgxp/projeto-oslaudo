@@ -84,9 +84,15 @@ jobs:
                 COMPOSER_BIN='php composer.phar'; \
               fi; \
             fi && \
-            echo 'Composer:' && eval $COMPOSER_BIN --version | head -1 && \
-            echo '=== [3/5] Instalando dependências do Composer ===' && \
-            eval $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction || { echo 'ERRO ao instalar dependências do Composer'; exit 1; } && \
+            if [ \"$COMPOSER_BIN\" = 'php composer.phar' ]; then \
+              echo 'Composer:' && php composer.phar --version | head -1 && \
+              echo '=== [3/5] Instalando dependências do Composer ===' && \
+              php composer.phar install --no-dev --optimize-autoloader --no-interaction || { echo 'ERRO ao instalar dependências do Composer'; exit 1; }; \
+            else \
+              echo 'Composer:' && $COMPOSER_BIN --version | head -1 && \
+              echo '=== [3/5] Instalando dependências do Composer ===' && \
+              $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction || { echo 'ERRO ao instalar dependências do Composer'; exit 1; }; \
+            fi && \
             echo '=== [4/5] Executando migrations ===' && \
             php artisan migrate --force || { echo 'ERRO ao executar migrations'; exit 1; } && \
             echo '=== [5/5] Limpando e otimizando caches ===' && \
