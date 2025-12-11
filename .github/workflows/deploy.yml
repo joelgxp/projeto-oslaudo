@@ -44,7 +44,7 @@ jobs:
           echo "Port: ${{ secrets.SSH_PORT }}"
           echo "User: ${{ secrets.SSH_USER }}"
           echo "Directory: ${{ secrets.SSH_DIRECTORY }}"
-          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -v ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "set -e && \
             cd ${{ secrets.SSH_DIRECTORY }} || { echo 'ERRO: Não foi possível acessar o diretório ${{ secrets.SSH_DIRECTORY }}'; exit 1; } && \
             echo 'Diretório atual:' && pwd && \
@@ -62,11 +62,27 @@ jobs:
             git pull origin main || { echo 'ERRO ao fazer pull do repositório'; exit 1; } && \
             echo 'Commit atual:' && git log -1 --oneline && \
             echo '=== [2/5] Verificando dependências ===' && \
-            command -v composer >/dev/null 2>&1 || { echo 'ERRO: Composer não está instalado'; exit 1; } && \
             command -v php >/dev/null 2>&1 || { echo 'ERRO: PHP não está instalado'; exit 1; } && \
-            echo 'Versões:' && php -v | head -1 && composer --version | head -1 && \
+            echo 'PHP encontrado:' && php -v | head -1 && \
+            COMPOSER_BIN='' && \
+            if command -v composer >/dev/null 2>&1; then \
+              COMPOSER_BIN='composer'; \
+            elif [ -f /usr/local/bin/composer ]; then \
+              COMPOSER_BIN='/usr/local/bin/composer'; \
+            elif [ -f ~/.composer/vendor/bin/composer ]; then \
+              COMPOSER_BIN='~/.composer/vendor/bin/composer'; \
+            elif [ -f composer.phar ]; then \
+              COMPOSER_BIN='php composer.phar'; \
+            else \
+              echo 'Composer não encontrado. Instalando...' && \
+              curl -sS https://getcomposer.org/installer | php && \
+              mv composer.phar /usr/local/bin/composer && \
+              chmod +x /usr/local/bin/composer && \
+              COMPOSER_BIN='composer'; \
+            fi && \
+            echo 'Composer:' && eval $COMPOSER_BIN --version | head -1 && \
             echo '=== [3/5] Instalando dependências do Composer ===' && \
-            composer install --no-dev --optimize-autoloader --no-interaction || { echo 'ERRO ao instalar dependências do Composer'; exit 1; } && \
+            eval $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction || { echo 'ERRO ao instalar dependências do Composer'; exit 1; } && \
             echo '=== [4/5] Executando migrations ===' && \
             php artisan migrate --force || { echo 'ERRO ao executar migrations'; exit 1; } && \
             echo '=== [5/5] Limpando e otimizando caches ===' && \
