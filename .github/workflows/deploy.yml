@@ -31,131 +31,109 @@ jobs:
           echo "   Diretório: ${{ secrets.SSH_DIRECTORY }}"
           echo ""
           
-          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
-            SSH_DIR="${{ secrets.SSH_DIRECTORY }}"
-            SSH_HOST="${{ secrets.SSH_HOST }}"
-            echo "📁 Acessando diretório do projeto..."
-            cd "\$SSH_DIR" || { echo "❌ ERRO: Não foi possível acessar o diretório \$SSH_DIR"; exit 1; }
-            echo "✅ Diretório atual: \$(pwd)"
-            echo ""
-            
-            echo "🔍 Verificando PHP..."
-            if ! command -v php >/dev/null 2>&1; then
-              echo "❌ ERRO: PHP não está instalado"
-              exit 1
-            fi
-            echo "✅ PHP encontrado: $(php -v | head -1)"
-            echo ""
-            
-            echo "🔍 Verificando Composer..."
-            if command -v composer >/dev/null 2>&1; then
-              COMPOSER_CMD="composer"
-              echo "✅ Composer encontrado no PATH"
-            elif [ -f composer.phar ]; then
-              COMPOSER_CMD="php composer.phar"
-              echo "✅ Composer encontrado (composer.phar)"
-            else
-              echo "📦 Composer não encontrado. Instalando..."
-              curl -sS https://getcomposer.org/installer | php
-              if [ -f composer.phar ]; then
-                COMPOSER_CMD="php composer.phar"
-                echo "✅ Composer instalado com sucesso!"
-              else
-                echo "❌ ERRO: Falha ao instalar Composer"
-                exit 1
-              fi
-            fi
-            echo "📊 Versão do Composer:"
-            if [ "\$COMPOSER_CMD" = "php composer.phar" ]; then
-              php composer.phar --version
-            else
-              \$COMPOSER_CMD --version
-            fi
-            echo ""
-            
-            echo "📦 Instalando dependências do Laravel..."
-            if [ "\$COMPOSER_CMD" = "php composer.phar" ]; then
-              php composer.phar install --no-dev --optimize-autoloader --no-interaction
-            else
-              \$COMPOSER_CMD install --no-dev --optimize-autoloader --no-interaction
-            fi
-            echo "✅ Dependências instaladas com sucesso!"
-            echo ""
-            
-            echo "🔧 Configurando Laravel..."
-            if [ ! -f .env ]; then
-              echo "⚠️  Arquivo .env não encontrado. Criando a partir do .env.example..."
-              cp .env.example .env 2>/dev/null || echo "⚠️  .env.example não encontrado"
-            fi
-            php artisan key:generate --force 2>/dev/null || echo "⚠️  Chave já existe ou erro ao gerar"
-            echo "✅ Laravel configurado!"
-            echo ""
-            
-            echo "🗄️  Executando migrations..."
-            php artisan migrate --force || echo "⚠️  Aviso: Erro ao executar migrations (pode ser normal se já estiverem executadas)"
-            echo ""
-            
-            echo "🧹 Limpando caches..."
-            php artisan config:clear || true
-            php artisan cache:clear || true
-            php artisan view:clear || true
-            php artisan route:clear || true
-            echo "✅ Caches limpos!"
-            echo ""
-            
-            echo "⚡ Otimizando aplicação..."
-            php artisan config:cache || true
-            php artisan route:cache || true
-            php artisan optimize || true
-            echo "✅ Aplicação otimizada!"
-            echo ""
-            
-            echo "🚀 Iniciando servidor Laravel..."
-            echo "📝 O servidor será iniciado em background na porta 8000"
-            echo "🌐 Acesse: http://\$SSH_HOST:8000"
-            echo ""
-            
-            # Para o servidor anterior se estiver rodando
-            pkill -f "artisan serve" || true
-            sleep 2
-            
-            # Inicia o servidor em background
-            nohup php artisan serve --host=0.0.0.0 --port=8000 > storage/logs/server.log 2>&1 &
-            SERVER_PID=\$!
-            sleep 3
-            
-            # Verifica se o servidor está rodando
-            if ps -p \$SERVER_PID > /dev/null 2>&1; then
-              echo "✅ Servidor iniciado com sucesso! (PID: \$SERVER_PID)"
-              echo "📋 Logs do servidor: storage/logs/server.log"
-            else
-              echo "⚠️  Verificando se o servidor está rodando de outra forma..."
-              if pgrep -f "artisan serve" > /dev/null; then
-                ACTUAL_PID=\$(pgrep -f "artisan serve" | head -1)
-                echo "✅ Servidor está rodando! (PID: \$ACTUAL_PID)"
-                echo "📋 Logs do servidor: storage/logs/server.log"
-              else
-                echo "❌ ERRO: Falha ao iniciar o servidor"
-                echo "📋 Últimas linhas do log:"
-                tail -20 storage/logs/server.log 2>/dev/null || echo "Log não disponível"
-                exit 1
-              fi
-            fi
-            echo ""
-            
-            echo "🎉 Deploy concluído com sucesso!"
-            echo "📊 Status final:"
-            echo "   - Diretório: \$(pwd)"
-            echo "   - PHP: \$(php -v | head -1 | cut -d' ' -f1-3)"
-            if [ "\$COMPOSER_CMD" = "php composer.phar" ]; then
-              COMPOSER_VERSION=\$(php composer.phar --version | head -1)
-            else
-              COMPOSER_VERSION=\$(\$COMPOSER_CMD --version | head -1)
-            fi
-            echo "   - Composer: \$COMPOSER_VERSION"
-            SERVER_PID_FINAL=\$(pgrep -f "artisan serve" | head -1 || echo "N/A")
-            echo "   - Servidor: Rodando (PID: \$SERVER_PID_FINAL)"
-          ENDSSH
+          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "SSH_DIR='${{ secrets.SSH_DIRECTORY }}' && \
+            SSH_HOST='${{ secrets.SSH_HOST }}' && \
+            echo '📁 Acessando diretório do projeto...' && \
+            cd \"\$SSH_DIR\" || { echo '❌ ERRO: Não foi possível acessar o diretório'; exit 1; } && \
+            echo '✅ Diretório atual:' && pwd && \
+            echo '' && \
+            echo '🔍 Verificando PHP...' && \
+            command -v php >/dev/null 2>&1 || { echo '❌ ERRO: PHP não está instalado'; exit 1; } && \
+            echo '✅ PHP encontrado:' && php -v | head -1 && \
+            echo '' && \
+            echo '🔍 Verificando Composer...' && \
+            if command -v composer >/dev/null 2>&1; then \
+              COMPOSER_CMD='composer' && \
+              echo '✅ Composer encontrado no PATH'; \
+            elif [ -f composer.phar ]; then \
+              COMPOSER_CMD='php composer.phar' && \
+              echo '✅ Composer encontrado (composer.phar)'; \
+            else \
+              echo '📦 Composer não encontrado. Instalando...' && \
+              curl -sS https://getcomposer.org/installer | php && \
+              if [ -f composer.phar ]; then \
+                COMPOSER_CMD='php composer.phar' && \
+                echo '✅ Composer instalado com sucesso!'; \
+              else \
+                echo '❌ ERRO: Falha ao instalar Composer' && \
+                exit 1; \
+              fi; \
+            fi && \
+            echo '📊 Versão do Composer:' && \
+            if [ \"\$COMPOSER_CMD\" = 'php composer.phar' ]; then \
+              php composer.phar --version; \
+            else \
+              \$COMPOSER_CMD --version; \
+            fi && \
+            echo '' && \
+            echo '📦 Instalando dependências do Laravel...' && \
+            if [ \"\$COMPOSER_CMD\" = 'php composer.phar' ]; then \
+              php composer.phar install --no-dev --optimize-autoloader --no-interaction; \
+            else \
+              \$COMPOSER_CMD install --no-dev --optimize-autoloader --no-interaction; \
+            fi && \
+            echo '✅ Dependências instaladas com sucesso!' && \
+            echo '' && \
+            echo '🔧 Configurando Laravel...' && \
+            if [ ! -f .env ]; then \
+              echo '⚠️  Arquivo .env não encontrado. Criando a partir do .env.example...' && \
+              cp .env.example .env 2>/dev/null || echo '⚠️  .env.example não encontrado'; \
+            fi && \
+            php artisan key:generate --force 2>/dev/null || echo '⚠️  Chave já existe ou erro ao gerar' && \
+            echo '✅ Laravel configurado!' && \
+            echo '' && \
+            echo '🗄️  Executando migrations...' && \
+            php artisan migrate --force || echo '⚠️  Aviso: Erro ao executar migrations (pode ser normal se já estiverem executadas)' && \
+            echo '' && \
+            echo '🧹 Limpando caches...' && \
+            php artisan config:clear || true && \
+            php artisan cache:clear || true && \
+            php artisan view:clear || true && \
+            php artisan route:clear || true && \
+            echo '✅ Caches limpos!' && \
+            echo '' && \
+            echo '⚡ Otimizando aplicação...' && \
+            php artisan config:cache || true && \
+            php artisan route:cache || true && \
+            php artisan optimize || true && \
+            echo '✅ Aplicação otimizada!' && \
+            echo '' && \
+            echo '🚀 Iniciando servidor Laravel...' && \
+            echo '📝 O servidor será iniciado em background na porta 8000' && \
+            echo \"🌐 Acesse: http://\$SSH_HOST:8000\" && \
+            echo '' && \
+            pkill -f 'artisan serve' || true && \
+            sleep 2 && \
+            nohup php artisan serve --host=0.0.0.0 --port=8000 > storage/logs/server.log 2>&1 & \
+            SERVER_PID=\$! && \
+            sleep 3 && \
+            if ps -p \$SERVER_PID >/dev/null 2>&1; then \
+              echo \"✅ Servidor iniciado com sucesso! (PID: \$SERVER_PID)\" && \
+              echo '📋 Logs do servidor: storage/logs/server.log'; \
+            elif pgrep -f 'artisan serve' >/dev/null; then \
+              ACTUAL_PID=\$(pgrep -f 'artisan serve' | head -1) && \
+              echo \"✅ Servidor está rodando! (PID: \$ACTUAL_PID)\" && \
+              echo '📋 Logs do servidor: storage/logs/server.log'; \
+            else \
+              echo '❌ ERRO: Falha ao iniciar o servidor' && \
+              echo '📋 Últimas linhas do log:' && \
+              tail -20 storage/logs/server.log 2>/dev/null || echo 'Log não disponível' && \
+              exit 1; \
+            fi && \
+            echo '' && \
+            echo '🎉 Deploy concluído com sucesso!' && \
+            echo '📊 Status final:' && \
+            echo \"   - Diretório: \$(pwd)\" && \
+            echo \"   - PHP: \$(php -v | head -1 | cut -d' ' -f1-3)\" && \
+            if [ \"\$COMPOSER_CMD\" = 'php composer.phar' ]; then \
+              COMPOSER_VERSION=\$(php composer.phar --version | head -1); \
+            else \
+              COMPOSER_VERSION=\$(\$COMPOSER_CMD --version | head -1); \
+            fi && \
+            echo \"   - Composer: \$COMPOSER_VERSION\" && \
+            SERVER_PID_FINAL=\$(pgrep -f 'artisan serve' | head -1 || echo 'N/A') && \
+            echo \"   - Servidor: Rodando (PID: \$SERVER_PID_FINAL)\""
           
           echo ""
           echo "🌐 Verificando se o servidor está respondendo..."
