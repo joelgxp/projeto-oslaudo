@@ -16,6 +16,16 @@ class LaudoService
      */
     public function gerarLaudo(Servico $servico, ?LaudoTemplate $template = null): Laudo
     {
+        // Verificar se o serviço está concluído
+        if ($servico->status !== 'concluido') {
+            throw new \Exception('O serviço precisa estar concluído para gerar o laudo.');
+        }
+
+        // Verificar se há execução
+        if (!$servico->execucao) {
+            throw new \Exception('O serviço precisa ter uma execução registrada para gerar o laudo.');
+        }
+
         // Buscar template padrão se não fornecido
         if (!$template) {
             $template = LaudoTemplate::where('empresa_id', $servico->empresa_id)

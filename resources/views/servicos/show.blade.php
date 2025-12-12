@@ -116,8 +116,26 @@
         </div>
     @elseif($servico->status === 'concluido' && auth()->user()->isAdmin())
         <div style="margin-top: 2rem;">
-            <form method="POST" action="{{ route('laudos.gerar', $servico) }}">
+            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #2563eb;">Gerar Laudo</h2>
+            <form method="POST" action="{{ route('laudos.gerar', $servico) }}" style="background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem;">
                 @csrf
+                @php
+                    $templates = \App\Models\LaudoTemplate::where('empresa_id', auth()->user()->empresa_id)
+                        ->where('tipo_servico', $servico->tipo_servico)
+                        ->where('ativo', true)
+                        ->get();
+                @endphp
+                @if($templates->count() > 0)
+                    <div class="form-group">
+                        <label class="form-label">Selecione um Template (opcional)</label>
+                        <select name="template_id" class="form-input">
+                            <option value="">Usar template padrão</option>
+                            @foreach($templates as $template)
+                                <option value="{{ $template->id }}">{{ $template->nome_template }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
                 <button type="submit" class="btn btn-primary">Gerar Laudo</button>
             </form>
         </div>

@@ -54,6 +54,17 @@ Route::middleware('auth')->group(function () {
         Route::get('laudos/{laudo}', [\App\Http\Controllers\LaudoController::class, 'show'])->name('laudos.show');
         Route::get('laudos/{laudo}/download', [\App\Http\Controllers\LaudoController::class, 'download'])->name('laudos.download');
         Route::post('laudos/{laudo}/enviar-assinatura', [\App\Http\Controllers\LaudoController::class, 'enviarAssinatura'])->name('laudos.enviar-assinatura');
+        
+        // Templates de Laudos (apenas admin)
+        Route::middleware('role:admin')->group(function () {
+            Route::resource('laudo-templates', \App\Http\Controllers\LaudoTemplateController::class);
+            
+            // Relatórios
+            Route::get('relatorios', [\App\Http\Controllers\RelatorioController::class, 'index'])->name('relatorios.index');
+            Route::get('relatorios/clientes', [\App\Http\Controllers\RelatorioController::class, 'clientes'])->name('relatorios.clientes');
+            Route::get('relatorios/servicos', [\App\Http\Controllers\RelatorioController::class, 'servicos'])->name('relatorios.servicos');
+            Route::get('relatorios/laudos', [\App\Http\Controllers\RelatorioController::class, 'laudos'])->name('relatorios.laudos');
+        });
     });
 });
 

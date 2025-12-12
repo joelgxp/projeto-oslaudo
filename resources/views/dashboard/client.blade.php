@@ -1,16 +1,17 @@
 @extends('layouts.app')
 
-@section('content')
-<div class="card">
-    <h1 style="margin-bottom: 1.5rem; font-size: 2rem; font-weight: 700;">Dashboard - Cliente</h1>
-    
-    <p style="font-size: 1.125rem; color: #6b7280; margin-bottom: 2rem;">
-        Bem-vindo, <strong>{{ $user->name }}</strong>!
-    </p>
+@section('page-title', 'Dashboard - Cliente')
 
-    <div style="background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; margin-top: 2rem;">
-        <p style="color: #6b7280;">Área do cliente em desenvolvimento.</p>
+@section('content')
+<div class="dashboard-welcome" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 2rem; border-radius: 0.75rem; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <h1 style="font-size: 1.875rem; font-weight: 700; margin: 0 0 0.5rem 0;">Bem-vindo, {{ $user->name }}!</h1>
+    <p style="font-size: 1rem; opacity: 0.9; margin: 0;">Área do cliente</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title" style="font-size: 1.25rem;">Informações</h2>
     </div>
+    <p style="color: var(--text-secondary);">Área do cliente em desenvolvimento. Em breve você poderá visualizar seus laudos e documentos aqui.</p>
 </div>
 @endsection
-

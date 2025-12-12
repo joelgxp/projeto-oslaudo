@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Laudo;
 use App\Models\Servico;
 use App\Services\LaudoService;
+use App\Notifications\LaudoEnviadoNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,7 @@ class LaudoController extends Controller
     /**
      * Gera um laudo a partir de um serviço
      */
-    public function gerar(Servico $servico)
+    public function gerar(Request $request, Servico $servico)
     {
         $user = Auth::user();
         
@@ -36,7 +37,16 @@ class LaudoController extends Controller
         }
 
         try {
-            $laudo = $this->laudoService->gerarLaudo($servico);
+            // Buscar template se especificado
+            $template = null;
+            if ($request->filled('template_id')) {
+                $template = \App\Models\LaudoTemplate::where('id', $request->template_id)
+                    ->where('empresa_id', $user->empresa_id)
+                    ->where('ativo', true)
+                    ->first();
+            }
+
+            $laudo = $this->laudoService->gerarLaudo($servico, $template);
             
             return redirect()->route('servicos.show', $servico)
                 ->with('success', 'Laudo gerado com sucesso!');
@@ -99,8 +109,20 @@ class LaudoController extends Controller
             'expira_em' => now()->addDays(30),
         ]);
 
-        // Aqui você pode enviar email para o cliente com o link de assinatura
-        // Mail::to($laudo->cliente->email)->send(new LaudoAssinaturaMail($laudo));
+        // Notificar cliente (se tiver email e usuário cadastrado)
+        if ($laudo->cliente->email) {
+            // Aqui você pode enviar email para o cliente com o link de assinatura
+            // Mail::to($laudo->cliente->email)->send(new LaudoAssinaturaMail($laudo));
+        }
+
+        // Notificar admin da empresa
+        $empresa = Auth::user()->empresa;
+        if ($empresa) {
+            $admins = $empresa->users()->where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new LaudoEnviadoNotification($laudo));
+            }
+        }
 
         return back()->with('success', 'Laudo enviado para assinatura com sucesso!');
     }

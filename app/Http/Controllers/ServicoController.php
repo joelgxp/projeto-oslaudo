@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Servico;
 use App\Models\Cliente;
 use App\Models\User;
+use App\Http\Requests\ServicoRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -69,28 +70,11 @@ class ServicoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ServicoRequest $request)
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
-            'cliente_id' => 'required|exists:clientes,id',
-            'tecnico_id' => 'nullable|exists:users,id',
-            'tipo_servico' => 'required|string|max:255',
-            'data_agendada' => 'nullable|date',
-            'hora_inicio' => 'nullable',
-            'endereco_servico' => 'nullable|string',
-            'descricao_servico' => 'nullable|string',
-            'observacoes' => 'nullable|string',
-            'status' => 'required|in:agendado,em_progresso,concluido,cancelado',
-        ]);
-
-        // Verificar se o cliente pertence à empresa
-        $cliente = Cliente::findOrFail($validated['cliente_id']);
-        if ($cliente->empresa_id !== $user->empresa_id) {
-            abort(403);
-        }
-
+        $validated = $request->validated();
         $validated['empresa_id'] = $user->empresa_id;
 
         Servico::create($validated);
@@ -144,7 +128,7 @@ class ServicoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Servico $servico)
+    public function update(ServicoRequest $request, Servico $servico)
     {
         $user = Auth::user();
         
@@ -153,24 +137,7 @@ class ServicoController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
-            'cliente_id' => 'required|exists:clientes,id',
-            'tecnico_id' => 'nullable|exists:users,id',
-            'tipo_servico' => 'required|string|max:255',
-            'data_agendada' => 'nullable|date',
-            'hora_inicio' => 'nullable',
-            'endereco_servico' => 'nullable|string',
-            'descricao_servico' => 'nullable|string',
-            'observacoes' => 'nullable|string',
-            'status' => 'required|in:agendado,em_progresso,concluido,cancelado',
-        ]);
-
-        // Verificar se o cliente pertence à empresa
-        $cliente = Cliente::findOrFail($validated['cliente_id']);
-        if ($cliente->empresa_id !== $user->empresa_id) {
-            abort(403);
-        }
-
+        $validated = $request->validated();
         $servico->update($validated);
 
         return redirect()->route('servicos.index')

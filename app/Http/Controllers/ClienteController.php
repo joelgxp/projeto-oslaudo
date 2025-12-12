@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Http\Requests\ClienteRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -60,37 +61,11 @@ class ClienteController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ClienteRequest $request)
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
-            'nome' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'telefone' => 'nullable|string|max:20',
-            'endereco' => 'nullable|string|max:255',
-            'numero' => 'nullable|string|max:20',
-            'complemento' => 'nullable|string|max:255',
-            'cidade' => 'nullable|string|max:255',
-            'estado' => 'nullable|string|size:2',
-            'cep' => 'nullable|string|max:10',
-            'tipo_documento' => 'nullable|in:cpf,cnpj',
-            'numero_documento' => 'nullable|string|max:20',
-        ]);
-
-        // Validação de CPF/CNPJ
-        if ($request->filled('tipo_documento') && $request->filled('numero_documento')) {
-            $documento = preg_replace('/[^0-9]/', '', $request->numero_documento);
-            
-            if ($request->tipo_documento === 'cpf' && strlen($documento) !== 11) {
-                return back()->withErrors(['numero_documento' => 'CPF deve ter 11 dígitos.'])->withInput();
-            }
-            
-            if ($request->tipo_documento === 'cnpj' && strlen($documento) !== 14) {
-                return back()->withErrors(['numero_documento' => 'CNPJ deve ter 14 dígitos.'])->withInput();
-            }
-        }
-
+        $validated = $request->validated();
         $validated['empresa_id'] = $user->empresa_id;
         $validated['data_criacao'] = now();
 
@@ -135,7 +110,7 @@ class ClienteController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Cliente $cliente)
+    public function update(ClienteRequest $request, Cliente $cliente)
     {
         $user = Auth::user();
         
@@ -144,33 +119,7 @@ class ClienteController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
-            'nome' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'telefone' => 'nullable|string|max:20',
-            'endereco' => 'nullable|string|max:255',
-            'numero' => 'nullable|string|max:20',
-            'complemento' => 'nullable|string|max:255',
-            'cidade' => 'nullable|string|max:255',
-            'estado' => 'nullable|string|size:2',
-            'cep' => 'nullable|string|max:10',
-            'tipo_documento' => 'nullable|in:cpf,cnpj',
-            'numero_documento' => 'nullable|string|max:20',
-        ]);
-
-        // Validação de CPF/CNPJ
-        if ($request->filled('tipo_documento') && $request->filled('numero_documento')) {
-            $documento = preg_replace('/[^0-9]/', '', $request->numero_documento);
-            
-            if ($request->tipo_documento === 'cpf' && strlen($documento) !== 11) {
-                return back()->withErrors(['numero_documento' => 'CPF deve ter 11 dígitos.'])->withInput();
-            }
-            
-            if ($request->tipo_documento === 'cnpj' && strlen($documento) !== 14) {
-                return back()->withErrors(['numero_documento' => 'CNPJ deve ter 14 dígitos.'])->withInput();
-            }
-        }
-
+        $validated = $request->validated();
         $cliente->update($validated);
 
         return redirect()->route('clientes.index')
