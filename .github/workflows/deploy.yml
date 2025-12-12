@@ -90,8 +90,11 @@ jobs:
               echo '⚠️  Arquivo .env não encontrado. Criando a partir do .env.example...' && \
               cp .env.example .env 2>/dev/null || echo '⚠️  .env.example não encontrado'; \
             fi && \
+            echo '🔒 Garantindo configurações de produção...' && \
+            sed -i 's/^APP_ENV=.*/APP_ENV=production/' .env 2>/dev/null || echo 'APP_ENV=production' >> .env && \
+            sed -i 's/^APP_DEBUG=.*/APP_DEBUG=false/' .env 2>/dev/null || echo 'APP_DEBUG=false' >> .env && \
             php artisan key:generate --force 2>/dev/null || echo '⚠️  Chave já existe ou erro ao gerar' && \
-            echo '✅ Laravel configurado!' && \
+            echo '✅ Laravel configurado para produção!' && \
             echo '' && \
             echo '🗄️  Executando migrations...' && \
             php artisan migrate --force || echo '⚠️  Aviso: Erro ao executar migrations (pode ser normal se já estiverem executadas)' && \
