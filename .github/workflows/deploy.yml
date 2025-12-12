@@ -21,6 +21,11 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           echo "✅ SSH configurado com sucesso!"
 
+      - name: Testar conexão SSH
+        run: |
+          echo "🔍 Testando conexão SSH..."
+          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo '✅ Conexão SSH OK' && pwd" || { echo "❌ ERRO: Falha na conexão SSH"; exit 1; }
+
       - name: Deploy Laravel
         run: |
           echo "🚀 Iniciando deploy..."
@@ -31,7 +36,7 @@ jobs:
           echo "   Diretório: ${{ secrets.SSH_DIRECTORY }}"
           echo ""
           
-          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "SSH_DIR='${{ secrets.SSH_DIRECTORY }}' && \
             SSH_HOST='${{ secrets.SSH_HOST }}' && \
             echo '📁 Acessando diretório do projeto...' && \
@@ -99,12 +104,11 @@ jobs:
             echo '🗄️  Executando migrations...' && \
             php artisan migrate --force || echo '⚠️  Aviso: Erro ao executar migrations (pode ser normal se já estiverem executadas)' && \
             echo '' && \
-            echo '🧹 Limpando TODOS os caches...' && \
+            echo '🧹 Limpando caches...' && \
             php artisan config:clear || true && \
             php artisan cache:clear || true && \
             php artisan view:clear || true && \
             php artisan route:clear || true && \
-            php artisan event:clear || true && \
             echo '✅ Caches limpos!' && \
             echo '' && \
             echo '⚡ Otimizando aplicação...' && \
@@ -113,21 +117,6 @@ jobs:
             php artisan view:cache || true && \
             php artisan optimize || true && \
             echo '✅ Aplicação otimizada!' && \
-            echo '' && \
-            echo '🔍 Verificando configuração...' && \
-            echo '   - APP_URL:' && grep '^APP_URL=' .env || echo '     ⚠️  APP_URL não encontrado' && \
-            echo '   - DocumentRoot deve apontar para: ' && echo \"     \$(pwd)/public\" && \
-            echo '   - Verificando se public/index.php existe:' && \
-            if [ -f public/index.php ]; then \
-              echo '     ✅ public/index.php existe'; \
-            else \
-              echo '     ❌ ERRO: public/index.php não encontrado!'; \
-            fi && \
-            echo '   - Verificando permissões:' && \
-            chmod -R 755 storage bootstrap/cache 2>/dev/null || echo '     ⚠️  Não foi possível ajustar permissões' && \
-            echo '   - Criando link simbólico de storage:' && \
-            php artisan storage:link || echo '     ⚠️  Link já existe ou erro ao criar' && \
-            echo '' && \
             echo '' && \
             echo '🎉 Deploy concluído com sucesso!' && \
             echo '📊 Status final:' && \
