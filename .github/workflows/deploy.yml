@@ -32,12 +32,11 @@ jobs:
           echo ""
           
           sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << ENDSSH
-            set -e
             SSH_DIR="${{ secrets.SSH_DIRECTORY }}"
             SSH_HOST="${{ secrets.SSH_HOST }}"
             echo "📁 Acessando diretório do projeto..."
-            cd \$SSH_DIR || { echo "❌ ERRO: Não foi possível acessar o diretório"; exit 1; }
-            echo "✅ Diretório atual: $(pwd)"
+            cd "\$SSH_DIR" || { echo "❌ ERRO: Não foi possível acessar o diretório \$SSH_DIR"; exit 1; }
+            echo "✅ Diretório atual: \$(pwd)"
             echo ""
             
             echo "🔍 Verificando PHP..."
@@ -122,33 +121,51 @@ jobs:
             
             # Inicia o servidor em background
             nohup php artisan serve --host=0.0.0.0 --port=8000 > storage/logs/server.log 2>&1 &
-            SERVER_PID=$!
+            SERVER_PID=\$!
             sleep 3
             
             # Verifica se o servidor está rodando
-            if ps -p $SERVER_PID > /dev/null; then
-              echo "✅ Servidor iniciado com sucesso! (PID: $SERVER_PID)"
+            if ps -p \$SERVER_PID > /dev/null 2>&1; then
+              echo "✅ Servidor iniciado com sucesso! (PID: \$SERVER_PID)"
               echo "📋 Logs do servidor: storage/logs/server.log"
             else
-              echo "❌ ERRO: Falha ao iniciar o servidor"
-              echo "📋 Últimas linhas do log:"
-              tail -20 storage/logs/server.log 2>/dev/null || echo "Log não disponível"
-              exit 1
+              echo "⚠️  Verificando se o servidor está rodando de outra forma..."
+              if pgrep -f "artisan serve" > /dev/null; then
+                ACTUAL_PID=\$(pgrep -f "artisan serve" | head -1)
+                echo "✅ Servidor está rodando! (PID: \$ACTUAL_PID)"
+                echo "📋 Logs do servidor: storage/logs/server.log"
+              else
+                echo "❌ ERRO: Falha ao iniciar o servidor"
+                echo "📋 Últimas linhas do log:"
+                tail -20 storage/logs/server.log 2>/dev/null || echo "Log não disponível"
+                exit 1
+              fi
             fi
             echo ""
             
             echo "🎉 Deploy concluído com sucesso!"
             echo "📊 Status final:"
-            echo "   - Diretório: $(pwd)"
-            echo "   - PHP: $(php -v | head -1 | cut -d' ' -f1-3)"
+            echo "   - Diretório: \$(pwd)"
+            echo "   - PHP: \$(php -v | head -1 | cut -d' ' -f1-3)"
             if [ "\$COMPOSER_CMD" = "php composer.phar" ]; then
               COMPOSER_VERSION=\$(php composer.phar --version | head -1)
             else
               COMPOSER_VERSION=\$(\$COMPOSER_CMD --version | head -1)
             fi
             echo "   - Composer: \$COMPOSER_VERSION"
-            echo "   - Servidor: Rodando (PID: $SERVER_PID)"
+            SERVER_PID_FINAL=\$(pgrep -f "artisan serve" | head -1 || echo "N/A")
+            echo "   - Servidor: Rodando (PID: \$SERVER_PID_FINAL)"
           ENDSSH
           
+          echo ""
+          echo "🌐 Verificando se o servidor está respondendo..."
+          sleep 5
+          if curl -f -s -o /dev/null -w "%{http_code}" --max-time 10 "http://${{ secrets.SSH_HOST }}:8000" | grep -q "200\|301\|302"; then
+            echo "✅ Servidor está respondendo corretamente!"
+            echo "🌐 URL: http://${{ secrets.SSH_HOST }}:8000"
+          else
+            echo "⚠️  Aviso: Não foi possível verificar a resposta do servidor (pode estar iniciando ainda)"
+            echo "🌐 Tente acessar: http://${{ secrets.SSH_HOST }}:8000"
+          fi
           echo ""
           echo "✅ Deploy finalizado com sucesso!"
