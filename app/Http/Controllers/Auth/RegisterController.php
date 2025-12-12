@@ -30,10 +30,24 @@ class RegisterController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Se não houver empresas, criar uma padrão
+        $empresa = \App\Models\Empresa::first();
+        if (!$empresa) {
+            $empresa = \App\Models\Empresa::create([
+                'name' => 'Nova Empresa',
+                'cnpj' => '00000000000000',
+                'plano' => 'basic',
+                'status_pagamento' => 'pendente',
+            ]);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'empresa_id' => $empresa->id,
+            'role' => 'admin', // Primeiro usuário sempre será admin
+            'status' => 'ativo',
         ]);
 
         Auth::login($user);
