@@ -12,133 +12,39 @@ jobs:
     steps:
       - name: Setup SSH
         run: |
-          echo "🔧 Configurando SSH..."
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y sshpass
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
-          echo "✅ SSH configurado com sucesso!"
-
-      - name: Testar conexão SSH
-        run: |
-          echo "🔍 Testando conexão SSH..."
-          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo '✅ Conexão SSH OK' && pwd" || { echo "❌ ERRO: Falha na conexão SSH"; exit 1; }
 
       - name: Deploy Laravel
         run: |
-          echo "🚀 Iniciando deploy..."
-          echo "📋 Informações do servidor:"
-          echo "   Host: ${{ secrets.SSH_HOST }}"
-          echo "   Porta: ${{ secrets.SSH_PORT }}"
-          echo "   Usuário: ${{ secrets.SSH_USER }}"
-          echo "   Diretório: ${{ secrets.SSH_DIRECTORY }}"
-          echo ""
-          
-          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "SSH_DIR='${{ secrets.SSH_DIRECTORY }}' && \
-            SSH_HOST='${{ secrets.SSH_HOST }}' && \
-            echo '📁 Acessando diretório do projeto...' && \
-            cd \"\$SSH_DIR\" || { echo '❌ ERRO: Não foi possível acessar o diretório'; exit 1; } && \
-            echo '✅ Diretório atual:' && pwd && \
-            echo '' && \
-            echo '🔄 Atualizando código do repositório...' && \
-            if [ -d .git ]; then \
-              git fetch origin || echo '⚠️  Aviso: Erro ao fazer fetch' && \
-              git pull origin main || echo '⚠️  Aviso: Erro ao fazer pull' && \
-              echo '✅ Código atualizado!' && \
-              echo '📝 Commit atual:' && git log -1 --oneline || echo '⚠️  Não foi possível verificar commit'; \
-            else \
-              echo '⚠️  Aviso: Diretório não é um repositório Git. Pulando atualização.'; \
-            fi && \
-            echo '' && \
-            echo '🔍 Verificando PHP...' && \
-            command -v php >/dev/null 2>&1 || { echo '❌ ERRO: PHP não está instalado'; exit 1; } && \
-            echo '✅ PHP encontrado:' && php -v | head -1 && \
-            echo '' && \
-            echo '🔍 Verificando Composer...' && \
+          sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd '${{ secrets.SSH_DIRECTORY }}' && \
+            git pull origin main && \
             if command -v composer >/dev/null 2>&1; then \
-              COMPOSER_CMD='composer' && \
-              echo '✅ Composer encontrado no PATH'; \
+              COMPOSER_CMD='composer'; \
             elif [ -f composer.phar ]; then \
-              COMPOSER_CMD='php composer.phar' && \
-              echo '✅ Composer encontrado (composer.phar)'; \
+              COMPOSER_CMD='php composer.phar'; \
             else \
-              echo '📦 Composer não encontrado. Instalando...' && \
               curl -sS https://getcomposer.org/installer | php && \
-              if [ -f composer.phar ]; then \
-                COMPOSER_CMD='php composer.phar' && \
-                echo '✅ Composer instalado com sucesso!'; \
-              else \
-                echo '❌ ERRO: Falha ao instalar Composer' && \
-                exit 1; \
-              fi; \
+              COMPOSER_CMD='php composer.phar'; \
             fi && \
-            echo '📊 Versão do Composer:' && \
-            if [ \"\$COMPOSER_CMD\" = 'php composer.phar' ]; then \
-              php composer.phar --version; \
-            else \
-              \$COMPOSER_CMD --version; \
-            fi && \
-            echo '' && \
-            echo '📦 Instalando dependências do Laravel...' && \
             if [ \"\$COMPOSER_CMD\" = 'php composer.phar' ]; then \
               php composer.phar install --no-dev --optimize-autoloader --no-interaction; \
             else \
               \$COMPOSER_CMD install --no-dev --optimize-autoloader --no-interaction; \
             fi && \
-            echo '✅ Dependências instaladas com sucesso!' && \
-            echo '' && \
-            echo '🔧 Configurando Laravel...' && \
-            if [ ! -f .env ]; then \
-              echo '⚠️  Arquivo .env não encontrado. Criando a partir do .env.example...' && \
-              cp .env.example .env 2>/dev/null || echo '⚠️  .env.example não encontrado'; \
-            fi && \
-            echo '🔒 Garantindo configurações de produção...' && \
             sed -i 's/^APP_ENV=.*/APP_ENV=production/' .env 2>/dev/null || echo 'APP_ENV=production' >> .env && \
             sed -i 's/^APP_DEBUG=.*/APP_DEBUG=false/' .env 2>/dev/null || echo 'APP_DEBUG=false' >> .env && \
-            php artisan key:generate --force 2>/dev/null || echo '⚠️  Chave já existe ou erro ao gerar' && \
-            echo '✅ Laravel configurado para produção!' && \
-            echo '' && \
-            echo '🗄️  Executando migrations...' && \
-            php artisan migrate --force || echo '⚠️  Aviso: Erro ao executar migrations (pode ser normal se já estiverem executadas)' && \
-            echo '' && \
-            echo '🧹 Limpando TODOS os caches...' && \
-            php artisan config:clear || true && \
-            php artisan cache:clear || true && \
-            php artisan view:clear || true && \
-            php artisan route:clear || true && \
-            rm -f bootstrap/cache/*.php 2>/dev/null || true && \
-            rm -f storage/framework/cache/* 2>/dev/null || true && \
-            rm -f storage/framework/views/* 2>/dev/null || true && \
-            echo '✅ Caches limpos completamente!' && \
-            echo '' && \
-            echo '⚡ Otimizando aplicação...' && \
-            php artisan config:cache || true && \
-            php artisan route:cache || true && \
-            php artisan view:cache || true && \
-            php artisan optimize || true && \
-            echo '✅ Aplicação otimizada!' && \
-            echo '' && \
-            echo '🔍 Verificando rotas registradas...' && \
-            php artisan route:list --columns=method,uri,name | head -15 || echo '⚠️  Não foi possível listar rotas' && \
-            echo '✅ Aplicação otimizada!' && \
-            echo '' && \
-            echo '🎉 Deploy concluído com sucesso!' && \
-            echo '📊 Status final:' && \
-            echo \"   - Diretório: \$(pwd)\" && \
-            echo \"   - PHP: \$(php -v | head -1 | cut -d' ' -f1-3)\" && \
-            if [ \"\$COMPOSER_CMD\" = 'php composer.phar' ]; then \
-              COMPOSER_VERSION=\$(php composer.phar --version | head -1); \
-            else \
-              COMPOSER_VERSION=\$(\$COMPOSER_CMD --version | head -1); \
-            fi && \
-            echo \"   - Composer: \$COMPOSER_VERSION\" && \
-            echo '   - Servidor: O servidor web do host serve a aplicação automaticamente' && \
-            echo \"   - Aplicação: Pronta para uso em http://\$SSH_HOST\""
-          
-          echo ""
-          echo "✅ Deploy finalizado com sucesso!"
-          echo "📝 Nota: Em servidores compartilhados, o servidor web (Apache/Nginx) serve a aplicação automaticamente"
-          echo "🌐 Acesse sua aplicação através do domínio configurado no seu host"
+            php artisan migrate --force 2>/dev/null || true && \
+            php artisan config:clear && \
+            php artisan cache:clear && \
+            php artisan route:clear && \
+            php artisan view:clear && \
+            php artisan config:cache && \
+            php artisan route:cache && \
+            php artisan view:cache && \
+            php artisan optimize"
