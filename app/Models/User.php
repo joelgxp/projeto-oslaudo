@@ -21,6 +21,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'empresa_id',
+        'role',
+        'status',
     ];
 
     /**
@@ -41,4 +45,44 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * Relacionamento com Empresa
+     */
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class);
+    }
+
+    /**
+     * Relacionamento com Servicos (como técnico)
+     */
+    public function servicos()
+    {
+        return $this->hasMany(Servico::class, 'tecnico_id');
+    }
+
+    /**
+     * Verificar se é admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Verificar se é técnico
+     */
+    public function isTechnician(): bool
+    {
+        return $this->role === 'technician';
+    }
+
+    /**
+     * Verificar se é cliente
+     */
+    public function isClient(): bool
+    {
+        return $this->role === 'client';
+    }
 }

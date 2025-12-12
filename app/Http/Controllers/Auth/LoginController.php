@@ -30,7 +30,19 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            return redirect()->intended('/dashboard');
+            $user = Auth::user();
+            
+            // Redirecionar baseado no role
+            switch ($user->role) {
+                case 'admin':
+                    return redirect()->intended('/dashboard');
+                case 'technician':
+                    return redirect()->intended('/dashboard');
+                case 'client':
+                    return redirect()->intended('/dashboard');
+                default:
+                    return redirect()->intended('/dashboard');
+            }
         }
 
         throw ValidationException::withMessages([

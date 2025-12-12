@@ -177,6 +177,12 @@
                 <a href="{{ url('/dashboard') }}" class="navbar-brand">{{ config('app.name') }}</a>
                 <div class="navbar-menu">
                     <a href="{{ url('/dashboard') }}" class="navbar-link">Dashboard</a>
+                    @auth
+                    @if(auth()->user()->isAdmin() || auth()->user()->isTechnician())
+                        <a href="{{ route('clientes.index') }}" class="navbar-link">Clientes</a>
+                        <a href="{{ route('servicos.index') }}" class="navbar-link">Ordens de Serviço</a>
+                    @endif
+                    @endauth
                     <form method="POST" action="{{ route('logout') }}" style="display: inline;">
                         @csrf
                         <button type="submit" class="btn btn-secondary">Sair</button>

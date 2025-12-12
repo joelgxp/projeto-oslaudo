@@ -1,0 +1,109 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700;">Nova Ordem de Serviço</h1>
+        <a href="{{ route('servicos.index') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    <form method="POST" action="{{ route('servicos.store') }}">
+        @csrf
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Cliente *</label>
+                <select name="cliente_id" class="form-input" required>
+                    <option value="">Selecione um cliente</option>
+                    @foreach($clientes as $cliente)
+                        <option value="{{ $cliente->id }}" {{ old('cliente_id') == $cliente->id ? 'selected' : '' }}>{{ $cliente->nome }}</option>
+                    @endforeach
+                </select>
+                @error('cliente_id')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Técnico</label>
+                <select name="tecnico_id" class="form-input">
+                    <option value="">Selecione um técnico</option>
+                    @foreach($tecnicos as $tecnico)
+                        <option value="{{ $tecnico->id }}" {{ old('tecnico_id') == $tecnico->id ? 'selected' : '' }}>{{ $tecnico->name }}</option>
+                    @endforeach
+                </select>
+                @error('tecnico_id')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tipo de Serviço *</label>
+                <input type="text" name="tipo_servico" class="form-input" value="{{ old('tipo_servico') }}" placeholder="Ex: Dedetização" required>
+                @error('tipo_servico')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Data Agendada</label>
+                <input type="date" name="data_agendada" class="form-input" value="{{ old('data_agendada') }}">
+                @error('data_agendada')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Hora de Início</label>
+                <input type="time" name="hora_inicio" class="form-input" value="{{ old('hora_inicio') }}">
+                @error('hora_inicio')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">Endereço do Serviço</label>
+                <input type="text" name="endereco_servico" class="form-input" value="{{ old('endereco_servico') }}">
+                @error('endereco_servico')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">Descrição do Serviço</label>
+                <textarea name="descricao_servico" class="form-input" rows="3">{{ old('descricao_servico') }}</textarea>
+                @error('descricao_servico')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">Observações</label>
+                <textarea name="observacoes" class="form-input" rows="3">{{ old('observacoes') }}</textarea>
+                @error('observacoes')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Status *</label>
+                <select name="status" class="form-input" required>
+                    <option value="agendado" {{ old('status', 'agendado') === 'agendado' ? 'selected' : '' }}>Agendado</option>
+                    <option value="em_progresso" {{ old('status') === 'em_progresso' ? 'selected' : '' }}>Em Progresso</option>
+                    <option value="concluido" {{ old('status') === 'concluido' ? 'selected' : '' }}>Concluído</option>
+                    <option value="cancelado" {{ old('status') === 'cancelado' ? 'selected' : '' }}>Cancelado</option>
+                </select>
+                @error('status')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">Salvar OS</button>
+            <a href="{{ route('servicos.index') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+@endsection
+
