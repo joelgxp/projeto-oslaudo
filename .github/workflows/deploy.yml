@@ -99,18 +99,35 @@ jobs:
             echo '🗄️  Executando migrations...' && \
             php artisan migrate --force || echo '⚠️  Aviso: Erro ao executar migrations (pode ser normal se já estiverem executadas)' && \
             echo '' && \
-            echo '🧹 Limpando caches...' && \
+            echo '🧹 Limpando TODOS os caches...' && \
             php artisan config:clear || true && \
             php artisan cache:clear || true && \
             php artisan view:clear || true && \
             php artisan route:clear || true && \
+            php artisan event:clear || true && \
             echo '✅ Caches limpos!' && \
             echo '' && \
             echo '⚡ Otimizando aplicação...' && \
             php artisan config:cache || true && \
             php artisan route:cache || true && \
+            php artisan view:cache || true && \
             php artisan optimize || true && \
             echo '✅ Aplicação otimizada!' && \
+            echo '' && \
+            echo '🔍 Verificando configuração...' && \
+            echo '   - APP_URL:' && grep '^APP_URL=' .env || echo '     ⚠️  APP_URL não encontrado' && \
+            echo '   - DocumentRoot deve apontar para: ' && echo \"     \$(pwd)/public\" && \
+            echo '   - Verificando se public/index.php existe:' && \
+            if [ -f public/index.php ]; then \
+              echo '     ✅ public/index.php existe'; \
+            else \
+              echo '     ❌ ERRO: public/index.php não encontrado!'; \
+            fi && \
+            echo '   - Verificando permissões:' && \
+            chmod -R 755 storage bootstrap/cache 2>/dev/null || echo '     ⚠️  Não foi possível ajustar permissões' && \
+            echo '   - Criando link simbólico de storage:' && \
+            php artisan storage:link || echo '     ⚠️  Link já existe ou erro ao criar' && \
+            echo '' && \
             echo '' && \
             echo '🎉 Deploy concluído com sucesso!' && \
             echo '📊 Status final:' && \
