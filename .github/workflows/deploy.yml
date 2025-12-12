@@ -21,7 +21,7 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           echo "✅ SSH configurado com sucesso!"
 
-      - name: Deploy e Iniciar Servidor
+      - name: Deploy Laravel
         run: |
           echo "🚀 Iniciando deploy..."
           echo "📋 Informações do servidor:"
@@ -37,6 +37,16 @@ jobs:
             echo '📁 Acessando diretório do projeto...' && \
             cd \"\$SSH_DIR\" || { echo '❌ ERRO: Não foi possível acessar o diretório'; exit 1; } && \
             echo '✅ Diretório atual:' && pwd && \
+            echo '' && \
+            echo '🔄 Atualizando código do repositório...' && \
+            if [ -d .git ]; then \
+              git fetch origin || echo '⚠️  Aviso: Erro ao fazer fetch' && \
+              git pull origin main || echo '⚠️  Aviso: Erro ao fazer pull' && \
+              echo '✅ Código atualizado!' && \
+              echo '📝 Commit atual:' && git log -1 --oneline || echo '⚠️  Não foi possível verificar commit'; \
+            else \
+              echo '⚠️  Aviso: Diretório não é um repositório Git. Pulando atualização.'; \
+            fi && \
             echo '' && \
             echo '🔍 Verificando PHP...' && \
             command -v php >/dev/null 2>&1 || { echo '❌ ERRO: PHP não está instalado'; exit 1; } && \
@@ -99,29 +109,6 @@ jobs:
             php artisan optimize || true && \
             echo '✅ Aplicação otimizada!' && \
             echo '' && \
-            echo '🚀 Iniciando servidor Laravel...' && \
-            echo '📝 O servidor será iniciado em background na porta 8000' && \
-            echo \"🌐 Acesse: http://\$SSH_HOST:8000\" && \
-            echo '' && \
-            pkill -f 'artisan serve' || true && \
-            sleep 2 && \
-            nohup php artisan serve --host=0.0.0.0 --port=8000 > storage/logs/server.log 2>&1 & \
-            SERVER_PID=\$! && \
-            sleep 3 && \
-            if ps -p \$SERVER_PID >/dev/null 2>&1; then \
-              echo \"✅ Servidor iniciado com sucesso! (PID: \$SERVER_PID)\" && \
-              echo '📋 Logs do servidor: storage/logs/server.log'; \
-            elif pgrep -f 'artisan serve' >/dev/null; then \
-              ACTUAL_PID=\$(pgrep -f 'artisan serve' | head -1) && \
-              echo \"✅ Servidor está rodando! (PID: \$ACTUAL_PID)\" && \
-              echo '📋 Logs do servidor: storage/logs/server.log'; \
-            else \
-              echo '❌ ERRO: Falha ao iniciar o servidor' && \
-              echo '📋 Últimas linhas do log:' && \
-              tail -20 storage/logs/server.log 2>/dev/null || echo 'Log não disponível' && \
-              exit 1; \
-            fi && \
-            echo '' && \
             echo '🎉 Deploy concluído com sucesso!' && \
             echo '📊 Status final:' && \
             echo \"   - Diretório: \$(pwd)\" && \
@@ -132,18 +119,10 @@ jobs:
               COMPOSER_VERSION=\$(\$COMPOSER_CMD --version | head -1); \
             fi && \
             echo \"   - Composer: \$COMPOSER_VERSION\" && \
-            SERVER_PID_FINAL=\$(pgrep -f 'artisan serve' | head -1 || echo 'N/A') && \
-            echo \"   - Servidor: Rodando (PID: \$SERVER_PID_FINAL)\""
+            echo '   - Servidor: O servidor web do host serve a aplicação automaticamente' && \
+            echo \"   - Aplicação: Pronta para uso em http://\$SSH_HOST\""
           
           echo ""
-          echo "🌐 Verificando se o servidor está respondendo..."
-          sleep 5
-          if curl -f -s -o /dev/null -w "%{http_code}" --max-time 10 "http://${{ secrets.SSH_HOST }}:8000" | grep -q "200\|301\|302"; then
-            echo "✅ Servidor está respondendo corretamente!"
-            echo "🌐 URL: http://${{ secrets.SSH_HOST }}:8000"
-          else
-            echo "⚠️  Aviso: Não foi possível verificar a resposta do servidor (pode estar iniciando ainda)"
-            echo "🌐 Tente acessar: http://${{ secrets.SSH_HOST }}:8000"
-          fi
-          echo ""
           echo "✅ Deploy finalizado com sucesso!"
+          echo "📝 Nota: Em servidores compartilhados, o servidor web (Apache/Nginx) serve a aplicação automaticamente"
+          echo "🌐 Acesse sua aplicação através do domínio configurado no seu host"
