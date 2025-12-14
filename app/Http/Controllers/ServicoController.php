@@ -59,6 +59,15 @@ class ServicoController extends Controller
     public function create()
     {
         $user = Auth::user();
+        
+        // Verificar se técnico pode criar OS
+        if ($user->isTechnician()) {
+            $tecnicoPodeCriar = \App\Models\ConfiguracaoSistema::get('tecnico_criar_os', $user->empresa_id, false);
+            if (!$tecnicoPodeCriar) {
+                abort(403, 'Você não tem permissão para criar Ordens de Serviço. Entre em contato com o administrador.');
+            }
+        }
+
         $clientes = Cliente::where('empresa_id', $user->empresa_id)->orderBy('nome')->get();
         $tecnicos = User::where('empresa_id', $user->empresa_id)
             ->where('role', 'technician')
@@ -74,8 +83,21 @@ class ServicoController extends Controller
     {
         $user = Auth::user();
 
+        // Verificar se técnico pode criar OS
+        if ($user->isTechnician()) {
+            $tecnicoPodeCriar = \App\Models\ConfiguracaoSistema::get('tecnico_criar_os', $user->empresa_id, false);
+            if (!$tecnicoPodeCriar) {
+                abort(403, 'Você não tem permissão para criar Ordens de Serviço. Entre em contato com o administrador.');
+            }
+        }
+
         $validated = $request->validated();
         $validated['empresa_id'] = $user->empresa_id;
+
+        // Se for técnico criando, atribuir a ele mesmo
+        if ($user->isTechnician() && !isset($validated['tecnico_id'])) {
+            $validated['tecnico_id'] = $user->id;
+        }
 
         Servico::create($validated);
 

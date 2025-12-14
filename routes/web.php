@@ -73,6 +73,7 @@ Route::middleware('auth')->group(function () {
             Route::prefix('configuracoes')->name('configuracoes.')->group(function () {
                 Route::get('/', [\App\Http\Controllers\ConfiguracaoController::class, 'index'])->name('index');
                 Route::match(['get', 'post', 'put'], '/sistema', [\App\Http\Controllers\ConfiguracaoController::class, 'sistema'])->name('sistema');
+                Route::match(['get', 'post', 'put'], '/ordem-servico', [\App\Http\Controllers\ConfiguracaoController::class, 'ordemServico'])->name('ordem-servico');
                 Route::match(['get', 'post'], '/usuarios', [\App\Http\Controllers\ConfiguracaoController::class, 'usuarios'])->name('usuarios');
                 Route::patch('/usuarios/toggle/{id}', [\App\Http\Controllers\ConfiguracaoController::class, 'toggleUsuario'])->name('usuarios.toggle');
                 Route::get('/emitente', [\App\Http\Controllers\ConfiguracaoController::class, 'emitente'])->name('emitente');

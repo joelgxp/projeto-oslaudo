@@ -4,7 +4,15 @@
 <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h1 style="font-size: 2rem; font-weight: 700;">Ordens de Serviço</h1>
-        <a href="{{ route('servicos.create') }}" class="btn btn-primary">Nova OS</a>
+        @php
+            $podeCriar = true;
+            if (auth()->user()->isTechnician()) {
+                $podeCriar = \App\Models\ConfiguracaoSistema::get('tecnico_criar_os', auth()->user()->empresa_id, false);
+            }
+        @endphp
+        @if ($podeCriar || auth()->user()->isAdmin())
+            <a href="{{ route('servicos.create') }}" class="btn btn-primary">Nova OS</a>
+        @endif
     </div>
 
     @if (session('error'))
@@ -119,7 +127,15 @@
     @else
         <div style="text-align: center; padding: 3rem; color: #6b7280;">
             <p style="font-size: 1.125rem;">Nenhuma ordem de serviço encontrada.</p>
-            <a href="{{ route('servicos.create') }}" class="btn btn-primary" style="margin-top: 1rem;">Criar Primeira OS</a>
+            @php
+                $podeCriar = true;
+                if (auth()->user()->isTechnician()) {
+                    $podeCriar = \App\Models\ConfiguracaoSistema::get('tecnico_criar_os', auth()->user()->empresa_id, false);
+                }
+            @endphp
+            @if ($podeCriar || auth()->user()->isAdmin())
+                <a href="{{ route('servicos.create') }}" class="btn btn-primary" style="margin-top: 1rem;">Criar Primeira OS</a>
+            @endif
         </div>
     @endif
 </div>

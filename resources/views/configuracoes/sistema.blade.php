@@ -10,11 +10,24 @@
     <div style="border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem;">
         <div style="display: flex; gap: 0;">
             <a href="{{ route('configuracoes.sistema') }}" style="padding: 0.75rem 1.25rem; border-bottom: 3px solid #fb923c; color: var(--text-primary); font-weight: 600; text-decoration: none; font-size: 0.8125rem;">Gerais</a>
+            <a href="{{ route('configuracoes.ordem-servico') }}" style="padding: 0.75rem 1.25rem; border-bottom: 3px solid transparent; color: var(--text-secondary); text-decoration: none; font-size: 0.8125rem; transition: color 0.2s ease;">Ordem de Serviço</a>
             <a href="#" style="padding: 0.75rem 1.25rem; border-bottom: 3px solid transparent; color: var(--text-secondary); text-decoration: none; font-size: 0.8125rem; transition: color 0.2s ease;">Notificações</a>
             <a href="#" style="padding: 0.75rem 1.25rem; border-bottom: 3px solid transparent; color: var(--text-secondary); text-decoration: none; font-size: 0.8125rem; transition: color 0.2s ease;">Atualizações</a>
             <a href="{{ route('configuracoes.emails') }}" style="padding: 0.75rem 1.25rem; border-bottom: 3px solid transparent; color: var(--text-secondary); text-decoration: none; font-size: 0.8125rem; transition: color 0.2s ease;">E-mail</a>
         </div>
     </div>
+
+    @if (session('success'))
+        <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <!-- Formulário Gerais -->
     <form method="POST" action="{{ route('configuracoes.sistema') }}">
@@ -31,7 +44,7 @@
                         type="text" 
                         id="nome_sistema" 
                         name="nome_sistema" 
-                        value="{{ old('nome_sistema', 'OSLaudos') }}"
+                        value="{{ old('nome_sistema', $configuracoes['nome_sistema'] ?? 'OSLaudos') }}"
                         class="form-input"
                         style="width: 100%; max-width: 400px;"
                     >
@@ -51,8 +64,8 @@
                         class="form-select"
                         style="width: 100%; max-width: 400px;"
                     >
-                        <option value="claro" {{ old('tema_sistema', 'claro') === 'claro' ? 'selected' : '' }}>Claro</option>
-                        <option value="escuro" {{ old('tema_sistema') === 'escuro' ? 'selected' : '' }}>Escuro</option>
+                        <option value="claro" {{ old('tema_sistema', $configuracoes['tema_sistema'] ?? 'claro') === 'claro' ? 'selected' : '' }}>Claro</option>
+                        <option value="escuro" {{ old('tema_sistema', $configuracoes['tema_sistema'] ?? 'claro') === 'escuro' ? 'selected' : '' }}>Escuro</option>
                     </select>
                     <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.375rem;">Selecione o tema que deseja usar no sistema</p>
                 </div>
@@ -70,14 +83,15 @@
                         class="form-select"
                         style="width: 100%; max-width: 400px;"
                     >
-                        <option value="10" {{ old('registros_pagina', '10') === '10' ? 'selected' : '' }}>10</option>
-                        <option value="25" {{ old('registros_pagina') === '25' ? 'selected' : '' }}>25</option>
-                        <option value="50" {{ old('registros_pagina') === '50' ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ old('registros_pagina') === '100' ? 'selected' : '' }}>100</option>
+                        <option value="10" {{ old('registros_pagina', $configuracoes['registros_pagina'] ?? '10') === '10' ? 'selected' : '' }}>10</option>
+                        <option value="25" {{ old('registros_pagina', $configuracoes['registros_pagina'] ?? '10') === '25' ? 'selected' : '' }}>25</option>
+                        <option value="50" {{ old('registros_pagina', $configuracoes['registros_pagina'] ?? '10') === '50' ? 'selected' : '' }}>50</option>
+                        <option value="100" {{ old('registros_pagina', $configuracoes['registros_pagina'] ?? '10') === '100' ? 'selected' : '' }}>100</option>
                     </select>
                     <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.375rem;">Selecione quantos registros deseja exibir nas listas</p>
                 </div>
             </div>
+
         </div>
 
         <!-- Botão Salvar -->
