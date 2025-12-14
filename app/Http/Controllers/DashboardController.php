@@ -27,10 +27,9 @@ class DashboardController extends Controller
                 return view('dashboard.admin', compact('user'));
             case 'technician':
                 return view('dashboard.technician', compact('user'));
-            case 'client':
-                return view('dashboard.client', compact('user'));
             default:
-                return view('dashboard', compact('user'));
+                // Se houver role 'client' antigo, redireciona para login
+                return redirect()->route('login')->with('error', 'Acesso não autorizado. Clientes não têm acesso ao sistema.');
         }
     }
 }

@@ -5,7 +5,10 @@
 @section('content')
 <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary);">Usuários e Técnicos</h1>
+        <div>
+            <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;">Usuários e Técnicos</h1>
+            <p style="color: #6b7280; font-size: 0.875rem;">Gerencie usuários do sistema (Administradores e Técnicos). Clientes são cadastrados no módulo de Clientes.</p>
+        </div>
         <button onclick="document.getElementById('modalNovoUsuario').style.display='block'" class="btn btn-primary">Novo Usuário</button>
     </div>
 
@@ -39,8 +42,6 @@
                                     <span class="badge badge-info">Administrador</span>
                                 @elseif($usuario->role === 'technician')
                                     <span class="badge badge-success">Técnico</span>
-                                @else
-                                    <span class="badge badge-secondary">Cliente</span>
                                 @endif
                             </td>
                             <td style="padding: 0.75rem;">
@@ -112,8 +113,10 @@
                     <option value="">Selecione</option>
                     <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Administrador</option>
                     <option value="technician" {{ old('role') === 'technician' ? 'selected' : '' }}>Técnico</option>
-                    <option value="client" {{ old('role') === 'client' ? 'selected' : '' }}>Cliente</option>
                 </select>
+                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                    ℹ️ Clientes são cadastrados no módulo de <strong>Clientes</strong>, não precisam de login no sistema.
+                </p>
                 @error('role')
                     <div class="error-message">{{ $message }}</div>
                 @enderror

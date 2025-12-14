@@ -32,7 +32,7 @@ class ConfiguracaoController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
-                'role' => 'required|in:admin,technician,client',
+                'role' => 'required|in:admin,technician',
                 'phone' => 'nullable|string|max:20',
             ]);
 

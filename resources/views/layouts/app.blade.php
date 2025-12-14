@@ -1026,7 +1026,28 @@
                 </div>
 
                 @auth
-                    @if(auth()->user()->isAdmin() || auth()->user()->isTechnician())
+                    @if(auth()->user()->isTechnician())
+                        {{-- Menu Simplificado para Técnico --}}
+                        <div class="nav-section">
+                            <div class="nav-section-title">Meus Serviços</div>
+                            <a href="{{ route('servicos.index') }}" class="nav-link {{ request()->routeIs('servicos.*') ? 'active' : '' }}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                <span>📋 Meus Serviços</span>
+                            </a>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">Conta</div>
+                            <a href="{{ route('perfil.show') }}" class="nav-link {{ request()->routeIs('perfil.*') ? 'active' : '' }}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <span>👤 Meu Perfil</span>
+                            </a>
+                        </div>
+                    @elseif(auth()->user()->isAdmin())
+                        {{-- Menu Completo para Admin --}}
                         <div class="nav-section">
                             <div class="nav-section-title">Gestão de Dados</div>
                             <a href="{{ route('clientes.index') }}" class="nav-link {{ request()->routeIs('clientes.*') ? 'active' : '' }}">
@@ -1042,9 +1063,6 @@
                                 <span>Ordens de Serviço</span>
                             </a>
                         </div>
-                    @endif
-
-                    @if(auth()->user()->isAdmin())
                         <div class="nav-section">
                             <div class="nav-section-title">Configurações</div>
                             <a href="{{ route('laudo-templates.index') }}" class="nav-link {{ request()->routeIs('laudo-templates.*') ? 'active' : '' }}">
@@ -1077,8 +1095,6 @@
                                     Administrador
                                 @elseif(auth()->user()->isTechnician())
                                     Técnico
-                                @else
-                                    Cliente
                                 @endif
                             </div>
                         </div>
@@ -1115,12 +1131,6 @@
                                 </svg>
                             </button>
                             <div class="profile-dropdown-menu">
-                                <a href="#" class="profile-dropdown-item">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                    </svg>
-                                    Área do Cliente
-                                </a>
                                 <a href="{{ route('perfil.show') }}" class="profile-dropdown-item">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -1223,8 +1233,6 @@
                                     Administrador
                                 @elseif(auth()->user()->isTechnician())
                                     Técnico
-                                @else
-                                    Cliente
                                 @endif
                             </span>
                         </div>
