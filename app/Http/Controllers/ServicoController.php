@@ -159,7 +159,12 @@ class ServicoController extends Controller
         // Verificar se há laudos vinculados
         if ($servico->laudos()->count() > 0) {
             return redirect()->route('servicos.index')
-                ->with('error', 'Não é possível excluir serviço com laudos vinculados.');
+                ->with('error', 'Não é possível excluir serviço com laudos vinculados. Exclua os laudos primeiro.');
+        }
+
+        // Verificar se há execução vinculada
+        if ($servico->execucao) {
+            $servico->execucao->delete();
         }
 
         $servico->delete();
@@ -175,12 +180,22 @@ class ServicoController extends Controller
     {
         $user = Auth::user();
         
-        // Verificar se o serviço pertence à empresa e ao técnico
-        if ($servico->empresa_id !== $user->empresa_id || $servico->tecnico_id !== $user->id) {
+        // Verificar se o serviço pertence à empresa
+        if ($servico->empresa_id !== $user->empresa_id) {
             abort(403);
         }
 
-        $servico->load(['cliente', 'execucao']);
+        // Verificar se é técnico e se o serviço é dele, ou se é admin
+        if ($user->isTechnician() && $servico->tecnico_id !== $user->id) {
+            abort(403, 'Você só pode executar serviços atribuídos a você.');
+        }
+
+        // Permitir que admin também possa executar (para testes/correções)
+        if (!$user->isAdmin() && !$user->isTechnician()) {
+            abort(403);
+        }
+
+        $servico->load(['cliente', 'execucao', 'tecnico']);
 
         return view('servicos.executar', compact('servico'));
     }
@@ -192,8 +207,18 @@ class ServicoController extends Controller
     {
         $user = Auth::user();
         
-        // Verificar se o serviço pertence à empresa e ao técnico
-        if ($servico->empresa_id !== $user->empresa_id || $servico->tecnico_id !== $user->id) {
+        // Verificar se o serviço pertence à empresa
+        if ($servico->empresa_id !== $user->empresa_id) {
+            abort(403);
+        }
+
+        // Verificar se é técnico e se o serviço é dele, ou se é admin
+        if ($user->isTechnician() && $servico->tecnico_id !== $user->id) {
+            abort(403, 'Você só pode executar serviços atribuídos a você.');
+        }
+
+        // Permitir que admin também possa salvar execução
+        if (!$user->isAdmin() && !$user->isTechnician()) {
             abort(403);
         }
 

@@ -1,0 +1,36 @@
+{
+  "name": "OSLaudos - Sistema de Gestão",
+  "short_name": "OSLaudos",
+  "description": "Sistema de gestão de laudos e serviços técnicos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Meus Serviços",
+      "short_name": "Serviços",
+      "description": "Ver meus serviços pendentes",
+      "url": "/servicos",
+      "icons": []
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Ir para o dashboard",
+      "url": "/dashboard",
+      "icons": []
+    }
+  ]
+}
+

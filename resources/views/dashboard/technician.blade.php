@@ -36,6 +36,52 @@
         margin-bottom: 2rem;
     }
 
+    @media (max-width: 768px) {
+        .dashboard-welcome {
+            padding: 1.5rem;
+        }
+
+        .dashboard-welcome h1 {
+            font-size: 1.5rem !important;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .stat-box {
+            padding: 1.25rem;
+        }
+
+        .stat-box-value {
+            font-size: 1.75rem;
+        }
+
+        .data-table {
+            overflow-x: auto;
+        }
+
+        table {
+            min-width: 600px;
+            font-size: 0.8125rem;
+        }
+
+        th, td {
+            padding: 0.5rem;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+
     .stat-box {
         background: white;
         border-radius: 0.75rem;

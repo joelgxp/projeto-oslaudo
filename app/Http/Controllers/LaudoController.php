@@ -51,7 +51,12 @@ class LaudoController extends Controller
             return redirect()->route('servicos.show', $servico)
                 ->with('success', 'Laudo gerado com sucesso!');
         } catch (\Exception $e) {
-            return back()->with('error', 'Erro ao gerar laudo: ' . $e->getMessage());
+            \Log::error('Erro ao gerar laudo: ' . $e->getMessage(), [
+                'servico_id' => $servico->id,
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', 'Erro ao gerar laudo. Verifique se o serviço está concluído e tem execução registrada.');
         }
     }
 
@@ -85,7 +90,11 @@ class LaudoController extends Controller
         }
 
         if (!$laudo->arquivo_pdf || !Storage::disk('public')->exists($laudo->arquivo_pdf)) {
-            abort(404, 'Arquivo PDF não encontrado.');
+            \Log::error('PDF não encontrado', [
+                'laudo_id' => $laudo->id,
+                'arquivo_pdf' => $laudo->arquivo_pdf
+            ]);
+            return back()->with('error', 'Arquivo PDF não encontrado. Por favor, gere o laudo novamente.');
         }
 
         return Storage::disk('public')->download($laudo->arquivo_pdf);

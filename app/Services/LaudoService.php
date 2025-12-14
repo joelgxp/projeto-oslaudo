@@ -29,7 +29,10 @@ class LaudoService
         // Buscar template padrão se não fornecido
         if (!$template) {
             $template = LaudoTemplate::where('empresa_id', $servico->empresa_id)
-                ->where('tipo_servico', $servico->tipo_servico)
+                ->where(function($q) use ($servico) {
+                    $q->where('tipo_servico', $servico->tipo_servico)
+                      ->orWhereNull('tipo_servico');
+                })
                 ->where('ativo', true)
                 ->first();
         }

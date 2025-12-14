@@ -50,7 +50,7 @@
 
     <!-- Tabela de Serviços -->
     @if($servicos->count() > 0)
-        <div style="overflow-x: auto;">
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background-color: #f9fafb; border-bottom: 2px solid #e5e7eb;">
@@ -89,13 +89,20 @@
                                 </span>
                             </td>
                             <td style="padding: 0.75rem; text-align: center;">
-                                <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                                    <a href="{{ route('servicos.show', $servico) }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Ver</a>
+                                <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                                    <a href="{{ route('servicos.show', $servico) }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem; min-width: 80px;">Ver</a>
                                     @if(auth()->user()->isAdmin())
-                                        <a href="{{ route('servicos.edit', $servico) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Editar</a>
+                                        <a href="{{ route('servicos.edit', $servico) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; min-width: 80px;">Editar</a>
+                                        @if($servico->laudos->count() === 0)
+                                            <form method="POST" action="{{ route('servicos.destroy', $servico) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta ordem de serviço? Esta ação não pode ser desfeita.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.875rem; min-width: 80px;">Excluir</button>
+                                            </form>
+                                        @endif
                                     @endif
                                     @if(auth()->user()->isTechnician() && $servico->status !== 'concluido' && $servico->tecnico_id === auth()->id())
-                                        <a href="{{ route('servicos.executar', $servico) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; background-color: #10b981;">Executar</a>
+                                        <a href="{{ route('servicos.executar', $servico) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; background-color: #10b981; min-width: 100px;">Executar</a>
                                     @endif
                                 </div>
                             </td>

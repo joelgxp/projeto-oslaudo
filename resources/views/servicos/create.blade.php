@@ -28,10 +28,17 @@
                 <label class="form-label">Técnico</label>
                 <select name="tecnico_id" class="form-input">
                     <option value="">Selecione um técnico</option>
-                    @foreach($tecnicos as $tecnico)
+                    @forelse($tecnicos as $tecnico)
                         <option value="{{ $tecnico->id }}" {{ old('tecnico_id') == $tecnico->id ? 'selected' : '' }}>{{ $tecnico->name }}</option>
-                    @endforeach
+                    @empty
+                        <option value="" disabled>Nenhum técnico cadastrado</option>
+                    @endforelse
                 </select>
+                @if($tecnicos->count() === 0)
+                    <p style="font-size: 0.875rem; color: #f59e0b; margin-top: 0.5rem;">
+                        ⚠️ Nenhum técnico cadastrado. <a href="{{ route('configuracoes.usuarios') }}" style="color: #2563eb; text-decoration: underline;">Cadastre um técnico aqui</a>
+                    </p>
+                @endif
                 @error('tecnico_id')
                     <div class="error-message">{{ $message }}</div>
                 @enderror

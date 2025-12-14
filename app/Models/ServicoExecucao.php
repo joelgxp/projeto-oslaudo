@@ -9,6 +9,8 @@ class ServicoExecucao extends Model
 {
     use HasFactory;
 
+    protected $table = 'servico_execucoes';
+
     protected $fillable = [
         'servico_id',
         'checklist_preenchido',

@@ -8,8 +8,10 @@
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('servicos.edit', $servico) }}" class="btn btn-primary">Editar</a>
             @endif
-            @if(auth()->user()->isTechnician() && $servico->status !== 'concluido' && $servico->tecnico_id === auth()->id())
-                <a href="{{ route('servicos.executar', $servico) }}" class="btn btn-primary" style="background-color: #10b981;">Executar</a>
+            @if($servico->status !== 'concluido' && ((auth()->user()->isTechnician() && $servico->tecnico_id === auth()->id()) || auth()->user()->isAdmin()))
+                <a href="{{ route('servicos.executar', $servico) }}" class="btn btn-primary" style="background-color: #10b981;">
+                    {{ $servico->execucao ? 'Editar Execução' : 'Executar' }}
+                </a>
             @endif
             <a href="{{ route('servicos.index') }}" class="btn btn-secondary">Voltar</a>
         </div>
@@ -114,14 +116,17 @@
                 @endforeach
             </div>
         </div>
-    @elseif($servico->status === 'concluido' && auth()->user()->isAdmin())
+    @elseif($servico->status === 'concluido' && $servico->execucao && auth()->user()->isAdmin())
         <div style="margin-top: 2rem;">
             <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #2563eb;">Gerar Laudo</h2>
             <form method="POST" action="{{ route('laudos.gerar', $servico) }}" style="background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem;">
                 @csrf
                 @php
                     $templates = \App\Models\LaudoTemplate::where('empresa_id', auth()->user()->empresa_id)
-                        ->where('tipo_servico', $servico->tipo_servico)
+                        ->where(function($q) use ($servico) {
+                            $q->where('tipo_servico', $servico->tipo_servico)
+                              ->orWhereNull('tipo_servico');
+                        })
                         ->where('ativo', true)
                         ->get();
                 @endphp
@@ -136,33 +141,76 @@
                         </select>
                     </div>
                 @endif
-                <button type="submit" class="btn btn-primary">Gerar Laudo</button>
+                <button type="submit" class="btn btn-primary">Gerar Laudo PDF</button>
             </form>
+        </div>
+    @elseif($servico->status === 'concluido' && !$servico->execucao)
+        <div style="margin-top: 2rem;">
+            <div class="alert alert-warning">
+                <p><strong>⚠️ Atenção:</strong> O serviço está marcado como concluído, mas não há execução registrada. É necessário registrar a execução antes de gerar o laudo.</p>
+                @if(auth()->user()->isTechnician() && $servico->tecnico_id === auth()->id())
+                    <a href="{{ route('servicos.executar', $servico) }}" class="btn btn-primary" style="margin-top: 1rem;">Registrar Execução</a>
+                @endif
+            </div>
         </div>
     @endif
 
     @if($servico->execucao)
         <div style="margin-top: 2rem;">
-            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #2563eb;">Execução</h2>
+            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #2563eb;">Execução do Serviço</h2>
             <div style="background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem;">
+                @if($servico->execucao->checklist_preenchido && count($servico->execucao->checklist_preenchido) > 0)
+                    <div style="margin-bottom: 1.5rem;">
+                        <p style="margin-bottom: 1rem;"><strong>Checklist Preenchido:</strong></p>
+                        <ul style="list-style: none; padding: 0;">
+                            @foreach($servico->execucao->checklist_preenchido as $item)
+                                <li style="padding: 0.5rem 0; color: #10b981;">✓ {{ ucfirst(str_replace('_', ' ', $item)) }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 @if($servico->execucao->problemas_encontrados)
-                    <p style="margin-bottom: 1rem;"><strong>Problemas Encontrados:</strong></p>
-                    <p style="margin-bottom: 1rem;">{{ $servico->execucao->problemas_encontrados }}</p>
+                    <div style="margin-bottom: 1.5rem;">
+                        <p style="margin-bottom: 1rem;"><strong>Problemas Encontrados:</strong></p>
+                        <p style="white-space: pre-wrap;">{{ $servico->execucao->problemas_encontrados }}</p>
+                    </div>
                 @endif
                 @if($servico->execucao->recomendacoes)
-                    <p style="margin-bottom: 1rem;"><strong>Recomendações:</strong></p>
-                    <p>{{ $servico->execucao->recomendacoes }}</p>
+                    <div style="margin-bottom: 1.5rem;">
+                        <p style="margin-bottom: 1rem;"><strong>Recomendações:</strong></p>
+                        <p style="white-space: pre-wrap;">{{ $servico->execucao->recomendacoes }}</p>
+                    </div>
                 @endif
                 @if($servico->execucao->fotos && count($servico->execucao->fotos) > 0)
                     <div style="margin-top: 1rem;">
-                        <p style="margin-bottom: 1rem;"><strong>Fotos:</strong></p>
+                        <p style="margin-bottom: 1rem;"><strong>Fotos Anexadas ({{ count($servico->execucao->fotos) }}):</strong></p>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
                             @foreach($servico->execucao->fotos as $foto)
-                                <img src="{{ asset('storage/' . $foto) }}" alt="Foto" style="width: 100%; border-radius: 0.5rem;">
+                                <div style="position: relative;">
+                                    <img src="{{ asset('storage/' . $foto) }}" alt="Foto" style="width: 100%; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+                                </div>
                             @endforeach
                         </div>
                     </div>
                 @endif
+                @if($servico->execucao->assinatura_tecnico)
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                        <p style="margin-bottom: 1rem;"><strong>Assinatura do Técnico:</strong></p>
+                        <img src="{{ $servico->execucao->assinatura_tecnico }}" alt="Assinatura" style="max-width: 300px; border: 1px solid #d1d5db; border-radius: 0.5rem; background: white; padding: 0.5rem;">
+                        @if($servico->execucao->data_assinatura)
+                            <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+                                Assinado em: {{ $servico->execucao->data_assinatura->format('d/m/Y H:i') }}
+                            </p>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        </div>
+    @elseif($servico->status !== 'concluido' && auth()->user()->isTechnician() && $servico->tecnico_id === auth()->id())
+        <div style="margin-top: 2rem;">
+            <div class="alert alert-info">
+                <p><strong>ℹ️ Próximo passo:</strong> Registre a execução do serviço preenchendo o checklist, anexando fotos e assinando.</p>
+                <a href="{{ route('servicos.executar', $servico) }}" class="btn btn-primary" style="margin-top: 1rem;">Registrar Execução</a>
             </div>
         </div>
     @endif

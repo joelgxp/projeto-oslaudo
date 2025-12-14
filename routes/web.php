@@ -38,6 +38,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     
+    // Perfil
+    Route::get('perfil', [\App\Http\Controllers\PerfilController::class, 'show'])->name('perfil.show');
+    Route::put('perfil', [\App\Http\Controllers\PerfilController::class, 'update'])->name('perfil.update');
+    
     // CRM - Clientes (apenas admin e technician)
     Route::middleware('role:admin,technician')->group(function () {
         Route::resource('clientes', \App\Http\Controllers\ClienteController::class);
@@ -64,6 +68,19 @@ Route::middleware('auth')->group(function () {
             Route::get('relatorios/clientes', [\App\Http\Controllers\RelatorioController::class, 'clientes'])->name('relatorios.clientes');
             Route::get('relatorios/servicos', [\App\Http\Controllers\RelatorioController::class, 'servicos'])->name('relatorios.servicos');
             Route::get('relatorios/laudos', [\App\Http\Controllers\RelatorioController::class, 'laudos'])->name('relatorios.laudos');
+            
+            // Configurações (apenas admin)
+            Route::prefix('configuracoes')->name('configuracoes.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\ConfiguracaoController::class, 'index'])->name('index');
+                Route::match(['get', 'post', 'put'], '/sistema', [\App\Http\Controllers\ConfiguracaoController::class, 'sistema'])->name('sistema');
+                Route::match(['get', 'post'], '/usuarios', [\App\Http\Controllers\ConfiguracaoController::class, 'usuarios'])->name('usuarios');
+                Route::patch('/usuarios/toggle/{id}', [\App\Http\Controllers\ConfiguracaoController::class, 'toggleUsuario'])->name('usuarios.toggle');
+                Route::get('/emitente', [\App\Http\Controllers\ConfiguracaoController::class, 'emitente'])->name('emitente');
+                Route::get('/permissoes', [\App\Http\Controllers\ConfiguracaoController::class, 'permissoes'])->name('permissoes');
+                Route::get('/auditoria', [\App\Http\Controllers\ConfiguracaoController::class, 'auditoria'])->name('auditoria');
+                Route::match(['get', 'post'], '/emails', [\App\Http\Controllers\ConfiguracaoController::class, 'emails'])->name('emails');
+                Route::get('/backup', [\App\Http\Controllers\ConfiguracaoController::class, 'backup'])->name('backup');
+            });
         });
     });
 });

@@ -45,4 +45,29 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    /**
+     * Render an exception into an HTTP response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $e
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Throwable
+     */
+    public function render($request, Throwable $e)
+    {
+        // Tratamento especial para erro 419 (CSRF Token Mismatch)
+        if ($e instanceof \Illuminate\Session\TokenMismatchException) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Sua sessão expirou. Por favor, recarregue a página e tente novamente.'], 419);
+            }
+
+            return redirect()->back()
+                ->withInput($request->except('password', '_token'))
+                ->with('error', 'Sua sessão expirou. Por favor, tente novamente.');
+        }
+
+        return parent::render($request, $e);
+    }
 }

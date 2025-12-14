@@ -29,7 +29,7 @@
 
             <div class="form-group">
                 <label class="form-label">Conteúdo HTML do Template *</label>
-                <textarea name="conteudo_html" class="form-input" rows="20" required style="font-family: monospace;">{{ old('conteudo_html', '<!DOCTYPE html>
+                <textarea name="conteudo_html" class="form-input" rows="20" required style="font-family: monospace;">@if(old('conteudo_html')){{ old('conteudo_html') }}@else<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -52,34 +52,34 @@
     
     <div class="section">
         <h2>Dados do Cliente</h2>
-        <p><span class="label">Nome:</span> {{cliente_nome}}</p>
-        <p><span class="label">Email:</span> {{cliente_email}}</p>
-        <p><span class="label">Telefone:</span> {{cliente_telefone}}</p>
-        <p><span class="label">Endereço:</span> {{cliente_endereco}}</p>
-        <p><span class="label">Documento:</span> {{cliente_documento}}</p>
+        <p><span class="label">Nome:</span> {!! "{{" !!}cliente_nome{!! "}}" !!}</p>
+        <p><span class="label">Email:</span> {!! "{{" !!}cliente_email{!! "}}" !!}</p>
+        <p><span class="label">Telefone:</span> {!! "{{" !!}cliente_telefone{!! "}}" !!}</p>
+        <p><span class="label">Endereço:</span> {!! "{{" !!}cliente_endereco{!! "}}" !!}</p>
+        <p><span class="label">Documento:</span> {!! "{{" !!}cliente_documento{!! "}}" !!}</p>
     </div>
     
     <div class="section">
         <h2>Dados do Serviço</h2>
-        <p><span class="label">Tipo de Serviço:</span> {{servico_tipo}}</p>
-        <p><span class="label">Data:</span> {{servico_data}}</p>
-        <p><span class="label">Descrição:</span> {{servico_descricao}}</p>
+        <p><span class="label">Tipo de Serviço:</span> {!! "{{" !!}servico_tipo{!! "}}" !!}</p>
+        <p><span class="label">Data:</span> {!! "{{" !!}servico_data{!! "}}" !!}</p>
+        <p><span class="label">Descrição:</span> {!! "{{" !!}servico_descricao{!! "}}" !!}</p>
     </div>
     
     <div class="section">
         <h2>Execução do Serviço</h2>
-        <p><span class="label">Técnico Responsável:</span> {{tecnico_nome}}</p>
+        <p><span class="label">Técnico Responsável:</span> {!! "{{" !!}tecnico_nome{!! "}}" !!}</p>
         <p><span class="label">Problemas Encontrados:</span></p>
-        <p>{{problemas_encontrados}}</p>
+        <p>{!! "{{" !!}problemas_encontrados{!! "}}" !!}</p>
         <p><span class="label">Recomendações:</span></p>
-        <p>{{recomendacoes}}</p>
+        <p>{!! "{{" !!}recomendacoes{!! "}}" !!}</p>
     </div>
     
     <div class="footer">
-        <p>Laudo gerado em {{data_emissao}} às {{hora_emissao}}</p>
+        <p>Laudo gerado em {!! "{{" !!}data_emissao{!! "}}" !!} às {!! "{{" !!}hora_emissao{!! "}}" !!}</p>
     </div>
 </body>
-</html>') }}</textarea>
+</html>@endif</textarea>
                 <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
                     Use variáveis como {{cliente_nome}}, {{servico_tipo}}, etc. para preencher automaticamente.
                 </p>

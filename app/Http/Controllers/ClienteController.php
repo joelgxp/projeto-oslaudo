@@ -141,7 +141,13 @@ class ClienteController extends Controller
         // Verificar se há serviços vinculados
         if ($cliente->servicos()->count() > 0) {
             return redirect()->route('clientes.index')
-                ->with('error', 'Não é possível excluir cliente com serviços vinculados.');
+                ->with('error', 'Não é possível excluir cliente com serviços vinculados. Exclua os serviços primeiro.');
+        }
+
+        // Verificar se há laudos vinculados
+        if ($cliente->laudos()->count() > 0) {
+            return redirect()->route('clientes.index')
+                ->with('error', 'Não é possível excluir cliente com laudos vinculados. Exclua os laudos primeiro.');
         }
 
         $cliente->delete();

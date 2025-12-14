@@ -75,6 +75,13 @@
                                 <div style="display: flex; gap: 0.5rem; justify-content: center;">
                                     <a href="{{ route('clientes.show', $cliente) }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Ver</a>
                                     <a href="{{ route('clientes.edit', $cliente) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Editar</a>
+                                    @if(auth()->user()->isAdmin())
+                                        <form method="POST" action="{{ route('clientes.destroy', $cliente) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Excluir</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

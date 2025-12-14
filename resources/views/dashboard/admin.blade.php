@@ -353,6 +353,13 @@
                 <p class="quick-action-desc">Visualizar relatórios e estatísticas</p>
             </div>
         </a>
+        <a href="{{ route('configuracoes.usuarios') }}" class="quick-action-card">
+            <div class="quick-action-icon">👥</div>
+            <div class="quick-action-content">
+                <h3 class="quick-action-title">Gerenciar Usuários</h3>
+                <p class="quick-action-desc">Cadastrar técnicos e usuários</p>
+            </div>
+        </a>
     </div>
 </div>
 
